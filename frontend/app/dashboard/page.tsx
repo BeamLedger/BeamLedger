@@ -43,14 +43,6 @@ const DashboardPage: React.FC = () => {
   const [newOrgDesc, setNewOrgDesc] = useState('')
   const [error, setError] = useState('')
 
-  // Check token on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      router.push('/login')
-    }
-  }, [router])
-
   useEffect(() => {
     fetchOrganizations().then(setOrganizations).catch(() => setError('Failed to load organizations'))
   }, [])
