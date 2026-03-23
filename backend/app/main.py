@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
@@ -6,12 +8,14 @@ from .api import auth, organizations, sites, zones, fixtures, rules, replacement
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Outdoor Lighting Compliance API")
+app = FastAPI(title="BeamLedger API")
 
-# Enable CORS for local frontend
+# CORS — restrict to known frontend origins; override via ALLOWED_ORIGINS env var (comma-separated).
+_default_origins = ["http://localhost:3000"]
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else _default_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[o.strip() for o in _allowed_origins if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,4 +35,4 @@ app.include_router(analytics.router)
 
 @app.get("/")
 def root():
-    return {"message": "Outdoor Lighting Compliance API"}
+    return {"message": "BeamLedger API"}

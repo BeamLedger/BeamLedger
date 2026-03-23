@@ -111,6 +111,10 @@ def create_fixture(fixture_in: FixtureCreate, current_user: User = Depends(get_c
 
 # ── Static path routes (must be before /{fixture_id} to avoid path conflicts) ─
 
+MAX_CSV_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_CSV_ROWS = 10_000
+
+
 @router.post("/import-csv", status_code=status.HTTP_201_CREATED)
 def import_fixtures(
     organization_id: int,
@@ -119,14 +123,22 @@ def import_fixtures(
     db: Session = Depends(get_db),
 ):
     """Import fixtures from a CSV file."""
+    if file.content_type and file.content_type not in ("text/csv", "application/octet-stream"):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
     membership = db.query(Membership).filter(Membership.organization_id == organization_id, Membership.user_id == current_user.id).first()
     if not membership:
         raise HTTPException(status_code=403, detail="Not authorized")
-    content = file.file.read().decode('utf-8')
+    raw = file.file.read(MAX_CSV_SIZE + 1)
+    if len(raw) > MAX_CSV_SIZE:
+        raise HTTPException(status_code=400, detail=f"CSV file exceeds maximum size of {MAX_CSV_SIZE // (1024*1024)} MB")
+    content = raw.decode('utf-8')
     reader = csv.DictReader(StringIO(content))
     imported = 0
     errors = []
     for idx, row in enumerate(reader, start=1):
+        if idx > MAX_CSV_ROWS:
+            errors.append({"row": idx, "error": f"Stopped: exceeded maximum of {MAX_CSV_ROWS} rows"})
+            break
         try:
             site_id_val = row.get('site_id')
             zone_id_val = row.get('zone_id')
@@ -171,9 +183,12 @@ def import_fixtures(
             db.add(fixture)
             db.commit()
             imported += 1
-        except Exception as e:
+        except ValueError as e:
             db.rollback()
             errors.append({"row": idx, "error": str(e)})
+        except Exception:
+            db.rollback()
+            errors.append({"row": idx, "error": "Failed to process row"})
     return {"imported": imported, "errors": errors}
 
 

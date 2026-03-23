@@ -4,10 +4,12 @@ import bcrypt
 import jwt
 from typing import Optional
 
-# JWT settings
-JWT_SECRET = os.getenv("JWT_SECRET", "changeme")
+# JWT settings — JWT_SECRET must be set in the environment; no insecure fallback.
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET environment variable is not set. Refusing to start with an insecure default.")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 
 def hash_password(password: str) -> str:
