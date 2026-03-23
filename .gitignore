@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment files
+.env
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Database
+*.db
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Docker
+pgdata/
