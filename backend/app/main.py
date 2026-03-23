@@ -11,7 +11,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="BeamLedger API")
 
 # CORS — restrict to known frontend origins; override via ALLOWED_ORIGINS env var (comma-separated).
-_default_origins = ["http://localhost:3000"]
+_default_origins = ["http://localhost:3001", "http://localhost:3000"]
 _allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else _default_origins
 app.add_middleware(
     CORSMiddleware,

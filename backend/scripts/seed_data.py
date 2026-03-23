@@ -18,6 +18,7 @@ from app.models.site import Site
 from app.models.zone import Zone
 from app.models.fixture import Fixture
 from app.models.rule import Rule
+from app.models.replacement import ReplacementPlan
 from app.utils.security import hash_password
 
 
@@ -113,7 +114,6 @@ def seed(db: Session):
     db.commit()
 
     # Create a replacement plan for the non-compliant fixture
-    from app.models.replacement import ReplacementPlan
     non_compliant_fixture = fixtures[1]
     plan = ReplacementPlan(
         fixture_id=non_compliant_fixture.id,
