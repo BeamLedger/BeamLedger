@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, PlusSquare, FileText, Activity, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, PlusSquare, FileText, Search, Upload } from 'lucide-react'
 
 function LightBulb() {
   const [on, setOn] = useState(true)
@@ -14,7 +14,6 @@ function LightBulb() {
       title={on ? "Click to turn off" : "Click to turn on"}
     >
       <svg viewBox="0 0 64 64" fill="none" className="w-full h-full">
-        {/* Glow effect when on */}
         {on && (
           <>
             <circle cx="32" cy="26" r="22" fill="#fbbf24" opacity="0.15">
@@ -27,8 +26,6 @@ function LightBulb() {
             </circle>
           </>
         )}
-
-        {/* Bulb glass */}
         <path
           d="M32 6C22.06 6 14 14.06 14 24c0 6.5 3.4 12.2 8.5 15.4C24.2 40.6 25 42.8 25 45v1h14v-1c0-2.2.8-4.4 2.5-5.6C46.6 36.2 50 30.5 50 24c0-9.94-8.06-18-18-18z"
           fill={on ? "#fbbf24" : "#d1d5db"}
@@ -39,8 +36,6 @@ function LightBulb() {
             <animate attributeName="fill" values="#fbbf24;#fcd34d;#fbbf24" dur="2s" repeatCount="indefinite" />
           )}
         </path>
-
-        {/* Filament lines inside bulb */}
         <path
           d="M28 28c0-3 2-6 4-6s4 3 4 6"
           stroke={on ? "#b45309" : "#9ca3af"}
@@ -52,14 +47,10 @@ function LightBulb() {
             <animate attributeName="opacity" values="1;0.6;1" dur="1.5s" repeatCount="indefinite" />
           )}
         </path>
-
-        {/* Screw base */}
         <rect x="24" y="46" width="16" height="3" rx="0" fill={on ? "#991b1b" : "#6b7280"} />
         <rect x="25" y="49" width="14" height="2.5" rx="0" fill={on ? "#7f1d1d" : "#4b5563"} />
         <rect x="26" y="51.5" width="12" height="2.5" rx="0" fill={on ? "#991b1b" : "#6b7280"} />
         <rect x="28" y="54" width="8" height="2" rx="0" fill={on ? "#7f1d1d" : "#4b5563"} />
-
-        {/* Light rays when on */}
         {on && (
           <g stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round">
             <line x1="32" y1="1" x2="32" y2="4">
@@ -89,6 +80,8 @@ const NAV_ITEMS = [
     section: "OPERATIONS",
     links: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { to: "/search", label: "Search Fixtures", icon: Search, exact: false },
+      { to: "/import", label: "Import Data", icon: Upload, exact: false },
       { to: "/new-check", label: "New Verification", icon: PlusSquare, exact: false },
     ],
   },

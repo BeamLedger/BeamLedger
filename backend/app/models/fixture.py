@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from ..database import Base
+from datetime import datetime, timezone
 
 
 class Fixture(Base):
@@ -8,18 +9,26 @@ class Fixture(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     asset_tag = Column(String, unique=True, index=True, nullable=False)
+    fixture_name = Column(String, nullable=True, index=True)
     fixture_type = Column(String, nullable=False)
-    manufacturer = Column(String, nullable=True)
+    manufacturer = Column(String, nullable=True, index=True)
     model = Column(String, nullable=True)
     wattage = Column(Float, nullable=True)
     lumens = Column(Float, nullable=True)
-    cct = Column(Float, nullable=True)  # Correlated Color Temperature (Kelvin)
+    cct = Column(Float, nullable=True)
+    cri = Column(Float, nullable=True)
+    quantity = Column(Integer, default=1, nullable=False)
+    space_type = Column(String, nullable=True, index=True)
+    space_area = Column(Float, nullable=True)
+    applicable_standards = Column(String, nullable=True)  # comma-separated StandardId values
     shielding = Column(String, nullable=True)
-    tilt = Column(Float, nullable=True)  # tilt angle in degrees
+    tilt = Column(Float, nullable=True)
     mount_height = Column(Float, nullable=True)
-    uplight_rating = Column(String, nullable=True)  # e.g. U0, U1, etc.
-    bug_rating = Column(String, nullable=True)      # e.g. B2-U0-G1
+    uplight_rating = Column(String, nullable=True)
+    bug_rating = Column(String, nullable=True)
     installation_status = Column(String, default="existing")
+    import_source = Column(String, default="manual")  # "manual" | "csv" | "xlsx"
+    imported_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     notes = Column(String, nullable=True)
     site_id = Column(Integer, ForeignKey("sites.id", ondelete="SET NULL"), nullable=True)
     zone_id = Column(Integer, ForeignKey("zones.id", ondelete="SET NULL"), nullable=True)

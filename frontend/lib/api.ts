@@ -49,10 +49,60 @@ export async function fetchFixturesBySite(siteId: number) {
   return res.data
 }
 
-export async function importFixturesCSV(orgId: number, file: File) {
+export async function searchFixtures(orgId: number, params: {
+  query?: string;
+  compliance_status?: string[];
+  standards?: string[];
+  import_source?: string[];
+  date_from?: string;
+  date_to?: string;
+  sort_by?: string;
+  sort_dir?: string;
+  page?: number;
+  page_size?: number;
+}) {
+  const res = await api.post('/fixtures/search', params, {
+    params: { organization_id: orgId },
+  })
+  return res.data
+}
+
+export async function importFixtures(orgId: number, file: File) {
   const formData = new FormData()
   formData.append('file', file, file.name)
-  const res = await api.post(`/fixtures/import-csv`, formData, { params: { organization_id: orgId } })
+  const res = await api.post('/fixtures/import', formData, {
+    params: { organization_id: orgId },
+  })
+  return res.data
+}
+
+export async function importFixturesCSV(orgId: number, file: File) {
+  return importFixtures(orgId, file)
+}
+
+export async function downloadImportErrorReport(auditId: number) {
+  const res = await api.get(`/fixtures/import-audit/${auditId}/error-report`, {
+    responseType: 'blob',
+  })
+  return res.data
+}
+
+export async function fetchImportAudits(orgId: number) {
+  const res = await api.get('/fixtures/import-audits', {
+    params: { organization_id: orgId },
+  })
+  return res.data
+}
+
+export async function evaluateFixture(fixtureId: number) {
+  const res = await api.get(`/fixtures/${fixtureId}/evaluate`)
+  return res.data
+}
+
+export async function evaluateBatch(orgId: number) {
+  const res = await api.post('/fixtures/evaluate-batch', null, {
+    params: { organization_id: orgId },
+  })
   return res.data
 }
 

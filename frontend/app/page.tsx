@@ -1,52 +1,55 @@
 "use client"
-import Link from 'next/link'
-import { mockComplianceChecks } from '../lib/mockData'
-import { CheckCircle2, XCircle, AlertCircle, TrendingUp, Clock, ArrowRight, PlusSquare } from 'lucide-react'
+import { useMemo } from "react"
+import Link from "next/link"
+import { CheckCircle2, XCircle, AlertCircle, TrendingUp, Clock, ArrowRight, PlusSquare, Search, Upload } from "lucide-react"
+import { sampleFixtures } from "../lib/compliance/sampleData"
+import { evaluateFixture, computeComplianceScore } from "../lib/compliance/engine"
+import { STANDARD_DEFINITIONS } from "../lib/compliance/standards"
+import type { ComplianceStatus, FixtureEvaluation } from "../lib/compliance/types"
 
 const mono = { fontFamily: "'IBM Plex Mono', monospace" } as const
 
-function StatusStamp({ status }: { status: string }) {
-  if (status === "passed") {
-    return (
-      <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] tracking-widest uppercase border"
-        style={{ ...mono, color: "#16a34a", borderColor: "#86efac", background: "#f0fdf4" }}
-      >
-        <CheckCircle2 size={9} /> COMPLIANT
-      </span>
-    )
+function StatusStamp({ status }: { status: ComplianceStatus }) {
+  const config: Record<ComplianceStatus, { color: string; bg: string; border: string; label: string; Icon: typeof CheckCircle2 }> = {
+    pass:       { color: "#16a34a", bg: "#f0fdf4", border: "#86efac", label: "COMPLIANT",      Icon: CheckCircle2 },
+    fail:       { color: "#dc2626", bg: "#fef2f2", border: "#fca5a5", label: "NON-COMPLIANT",  Icon: XCircle },
+    exempt:     { color: "#2563eb", bg: "#eff6ff", border: "#93c5fd", label: "EXEMPT",         Icon: AlertCircle },
+    data_error: { color: "#d97706", bg: "#fffbeb", border: "#fcd34d", label: "DATA ERROR",     Icon: AlertCircle },
   }
-  if (status === "failed") {
-    return (
-      <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] tracking-widest uppercase border"
-        style={{ ...mono, color: "#dc2626", borderColor: "#fca5a5", background: "#fef2f2" }}
-      >
-        <XCircle size={9} /> NON-COMPLIANT
-      </span>
-    )
-  }
+  const c = config[status]
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] tracking-widest uppercase border"
-      style={{ ...mono, color: "#d97706", borderColor: "#fcd34d", background: "#fffbeb" }}
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] tracking-widest uppercase border whitespace-nowrap"
+      style={{ ...mono, color: c.color, borderColor: c.border, background: c.bg }}
     >
-      <AlertCircle size={9} /> PARTIAL
+      <c.Icon size={9} /> {c.label}
     </span>
   )
 }
 
 export default function DashboardPage() {
-  const totalChecks = mockComplianceChecks.length
-  const passedChecks = mockComplianceChecks.filter((c) => c.status === "passed").length
-  const failedChecks = mockComplianceChecks.filter((c) => c.status === "failed").length
-  const partialChecks = mockComplianceChecks.filter((c) => c.status === "partial").length
-  const averageScore = Math.round(
-    mockComplianceChecks.reduce((acc, check) => acc + check.overallScore, 0) / totalChecks
-  )
+  // Evaluate all fixtures
+  const evaluations = useMemo(() => {
+    return sampleFixtures.map((fx) => ({
+      fixture: fx,
+      evaluation: evaluateFixture(fx),
+      score: 0,
+    })).map((item) => ({
+      ...item,
+      score: computeComplianceScore(item.evaluation.results),
+    }))
+  }, [])
+
+  const totalChecks = evaluations.length
+  const passedChecks = evaluations.filter((e) => e.evaluation.overallStatus === "pass").length
+  const failedChecks = evaluations.filter((e) => e.evaluation.overallStatus === "fail").length
+  const otherChecks = totalChecks - passedChecks - failedChecks
+  const averageScore = totalChecks > 0
+    ? Math.round(evaluations.reduce((acc, e) => acc + e.score, 0) / totalChecks)
+    : 0
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex-1 overflow-auto p-6 space-y-6">
       {/* Page title */}
       <div className="flex items-start justify-between border-b border-[#e5e7eb] pb-4">
         <div>
@@ -57,49 +60,63 @@ export default function DashboardPage() {
             Verification Dashboard
           </h1>
           <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
-            Displaying all compliance records — IEC, UL, FCC, Energy Star, RoHS, IEEE
+            Real-time compliance evaluation — ASHRAE 90.1 &middot; Title 24 &middot; IES &middot; DLC QPL &middot; IECC
           </p>
         </div>
-        <Link href="/new-check">
-          <button
-            className="flex items-center gap-2 px-4 py-2 text-[11px] tracking-widest uppercase border transition-colors hover:opacity-90"
-            style={{
-              ...mono,
-              background: "#7f1d1d",
-              borderColor: "#991b1b",
-              color: "#ffffff",
-              fontWeight: 500,
-            }}
-          >
-            <PlusSquare size={12} />
-            New Verification
-          </button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/search">
+            <button
+              className="flex items-center gap-2 px-4 py-2 text-[11px] tracking-widest uppercase border transition-colors hover:opacity-90"
+              style={{ ...mono, background: "#f9fafb", borderColor: "#e5e7eb", color: "#6b7280" }}
+            >
+              <Search size={12} />
+              Search
+            </button>
+          </Link>
+          <Link href="/import">
+            <button
+              className="flex items-center gap-2 px-4 py-2 text-[11px] tracking-widest uppercase border transition-colors hover:opacity-90"
+              style={{ ...mono, background: "#f9fafb", borderColor: "#e5e7eb", color: "#6b7280" }}
+            >
+              <Upload size={12} />
+              Import
+            </button>
+          </Link>
+          <Link href="/new-check">
+            <button
+              className="flex items-center gap-2 px-4 py-2 text-[11px] tracking-widest uppercase border transition-colors hover:opacity-90"
+              style={{ ...mono, background: "#7f1d1d", borderColor: "#991b1b", color: "#ffffff", fontWeight: 500 }}
+            >
+              <PlusSquare size={12} />
+              New Verification
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats strip */}
       <div className="grid grid-cols-4 border border-[#e5e7eb]" style={{ background: "#f9fafb" }}>
         {[
-          { label: "TOTAL RECORDS", value: totalChecks, sub: "All time", color: "#6b7280", icon: <Clock size={11} /> },
+          { label: "TOTAL FIXTURES", value: totalChecks, sub: "All evaluated", color: "#6b7280", icon: <Clock size={11} /> },
           {
             label: "COMPLIANT",
             value: passedChecks,
-            sub: `${Math.round((passedChecks / totalChecks) * 100)}% pass rate`,
+            sub: totalChecks > 0 ? `${Math.round((passedChecks / totalChecks) * 100)}% pass rate` : "—",
             color: "#16a34a",
             icon: <CheckCircle2 size={11} />,
           },
           {
-            label: "PARTIAL / REVIEW",
-            value: partialChecks,
-            sub: "Attention required",
-            color: "#d97706",
-            icon: <AlertCircle size={11} />,
+            label: "NON-COMPLIANT",
+            value: failedChecks,
+            sub: failedChecks > 0 ? "Action required" : "None",
+            color: "#dc2626",
+            icon: <XCircle size={11} />,
           },
           {
-            label: "AVG. COMPLIANCE",
+            label: "AVG. SCORE",
             value: `${averageScore}%`,
             sub: "Across all standards",
-            color: "#dc2626",
+            color: averageScore >= 80 ? "#16a34a" : averageScore >= 50 ? "#d97706" : "#dc2626",
             icon: <TrendingUp size={11} />,
           },
         ].map((stat) => (
@@ -134,7 +151,7 @@ export default function DashboardPage() {
           style={{ background: "#f9fafb" }}
         >
           <span className="text-[10px] tracking-widest uppercase" style={{ ...mono, color: "#6b7280" }}>
-            Verification Records
+            Fixture Compliance Records
           </span>
           <span className="text-[10px]" style={{ ...mono, color: "#9ca3af" }}>
             {totalChecks} entries
@@ -146,14 +163,14 @@ export default function DashboardPage() {
           <div
             className="grid border-b border-[#e5e7eb]"
             style={{
-              gridTemplateColumns: "100px 1fr 180px 180px 110px 120px 50px",
+              gridTemplateColumns: "90px 1fr 150px 130px 70px 100px 120px 40px",
               background: "#f9fafb",
             }}
           >
-            {["REF. ID", "PRODUCT NAME", "PRODUCT TYPE", "MANUFACTURER", "DATE FILED", "STATUS", ""].map((h) => (
+            {["ASSET TAG", "FIXTURE NAME", "MANUFACTURER", "SPACE TYPE", "SCORE", "STANDARDS", "STATUS", ""].map((h) => (
               <div
                 key={h || 'actions'}
-                className="px-4 py-2.5 text-[9px] tracking-[0.18em] uppercase"
+                className="px-3 py-2.5 text-[9px] tracking-[0.15em] uppercase"
                 style={{ ...mono, color: "#6b7280", borderRight: "1px solid #f0f0f2" }}
               >
                 {h}
@@ -162,60 +179,72 @@ export default function DashboardPage() {
           </div>
 
           {/* Table rows */}
-          {mockComplianceChecks.map((check, idx) => (
-            <div
-              key={check.id}
-              className="grid border-b border-[#f0f0f2] transition-colors hover:!bg-[#f5f5fa]"
-              style={{
-                gridTemplateColumns: "100px 1fr 180px 180px 110px 120px 50px",
-                background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
-              }}
-            >
+          {evaluations.map((item, idx) => {
+            const fx = item.fixture
+            const ev = item.evaluation
+            const score = item.score
+            const scoreColor = score >= 80 ? "#16a34a" : score >= 50 ? "#d97706" : "#dc2626"
+
+            return (
               <div
-                className="px-4 py-3 flex items-center"
-                style={{ borderRight: "1px solid #f0f0f2" }}
+                key={fx.id}
+                className="grid border-b border-[#f0f0f2] transition-colors hover:!bg-[#f5f5fa]"
+                style={{
+                  gridTemplateColumns: "90px 1fr 150px 130px 70px 100px 120px 40px",
+                  background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
+                }}
               >
-                <span className="text-[10px]" style={{ ...mono, color: "#6b7280" }}>
-                  BL-{String(idx + 1).padStart(3, "0")}
-                </span>
+                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <span className="text-[10px]" style={{ ...mono, color: "#6b7280" }}>
+                    {fx.assetTag}
+                  </span>
+                </div>
+                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="min-w-0">
+                    <span className="text-[12px] block truncate" style={{ fontWeight: 500, color: "#1f2937" }}>
+                      {fx.fixtureName}
+                    </span>
+                    <span className="text-[10px] block truncate" style={{ color: "#9ca3af" }}>
+                      {fx.fixtureType} &middot; {fx.wattage}W &middot; {fx.lumenOutput} lm
+                    </span>
+                  </div>
+                </div>
+                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <span className="text-[11px] truncate" style={{ color: "#6b7280" }}>
+                    {fx.manufacturer}
+                  </span>
+                </div>
+                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <span className="text-[10px] truncate" style={{ color: "#6b7280" }}>
+                    {fx.spaceType}
+                  </span>
+                </div>
+                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <span className="text-[11px]" style={{ ...mono, fontWeight: 600, color: scoreColor }}>
+                    {score}%
+                  </span>
+                </div>
+                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <span className="text-[9px]" style={{ ...mono, color: "#9ca3af" }}>
+                    {fx.applicableStandards.length} std{fx.applicableStandards.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <StatusStamp status={ev.overallStatus} />
+                </div>
+                <div className="px-2 py-3 flex items-center justify-center">
+                  <Link href={`/results/${fx.id}`}>
+                    <button
+                      className="p-1 transition-colors text-[#9ca3af] hover:text-[#7f1d1d]"
+                      title="View Report"
+                    >
+                      <ArrowRight size={14} />
+                    </button>
+                  </Link>
+                </div>
               </div>
-              <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <span className="text-[12px]" style={{ fontWeight: 500, color: "#1f2937" }}>
-                  {check.productName}
-                </span>
-              </div>
-              <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <span className="text-[11px]" style={{ color: "#6b7280" }}>
-                  {check.productType}
-                </span>
-              </div>
-              <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <span className="text-[11px]" style={{ color: "#6b7280" }}>
-                  {check.manufacturer}
-                </span>
-              </div>
-              <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <span className="text-[10px]" style={{ ...mono, color: "#6b7280" }}>
-                  {new Date(check.date)
-                    .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" })
-                    .toUpperCase()}
-                </span>
-              </div>
-              <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <StatusStamp status={check.status} />
-              </div>
-              <div className="px-2 py-3 flex items-center justify-center">
-                <Link href={`/results/${check.id}`}>
-                  <button
-                    className="p-1 transition-colors text-[#9ca3af] hover:text-[#7f1d1d]"
-                    title="View Report"
-                  >
-                    <ArrowRight size={14} />
-                  </button>
-                </Link>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -225,10 +254,10 @@ export default function DashboardPage() {
         style={{ background: "#fdfcf8" }}
       >
         <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: "#92800a" }}>
-          Data reflects real-time verification registry
+          Real-time compliance evaluation — LPD, efficacy, illuminance
         </span>
         <span className="text-[9px]" style={{ ...mono, color: "#a0903a" }}>
-          Standards: IEC 60598 &middot; UL &middot; EN 55015 &middot; FCC Part 15 &middot; Energy Star &middot; RoHS &middot; IEEE 802.15.4
+          ASHRAE 90.1-2022 &middot; Title 24-2022 &middot; IES RP &middot; DLC QPL v5.1 &middot; IECC 2021
         </span>
       </div>
     </div>
