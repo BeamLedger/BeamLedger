@@ -1,7 +1,88 @@
 "use client"
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, PlusSquare, FileText, Activity, ChevronRight } from 'lucide-react'
+
+function LightBulb() {
+  const [on, setOn] = useState(true)
+
+  return (
+    <div
+      className="w-6 h-6 flex-shrink-0 cursor-pointer select-none"
+      onClick={() => setOn(!on)}
+      title={on ? "Click to turn off" : "Click to turn on"}
+    >
+      <svg viewBox="0 0 64 64" fill="none" className="w-full h-full">
+        {/* Glow effect when on */}
+        {on && (
+          <>
+            <circle cx="32" cy="26" r="22" fill="#fbbf24" opacity="0.15">
+              <animate attributeName="r" values="20;24;20" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.12;0.2;0.12" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="32" cy="26" r="16" fill="#fbbf24" opacity="0.10">
+              <animate attributeName="r" values="14;17;14" dur="1.8s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.08;0.15;0.08" dur="1.8s" repeatCount="indefinite" />
+            </circle>
+          </>
+        )}
+
+        {/* Bulb glass */}
+        <path
+          d="M32 6C22.06 6 14 14.06 14 24c0 6.5 3.4 12.2 8.5 15.4C24.2 40.6 25 42.8 25 45v1h14v-1c0-2.2.8-4.4 2.5-5.6C46.6 36.2 50 30.5 50 24c0-9.94-8.06-18-18-18z"
+          fill={on ? "#fbbf24" : "#d1d5db"}
+          stroke={on ? "#f59e0b" : "#9ca3af"}
+          strokeWidth="2"
+        >
+          {on && (
+            <animate attributeName="fill" values="#fbbf24;#fcd34d;#fbbf24" dur="2s" repeatCount="indefinite" />
+          )}
+        </path>
+
+        {/* Filament lines inside bulb */}
+        <path
+          d="M28 28c0-3 2-6 4-6s4 3 4 6"
+          stroke={on ? "#b45309" : "#9ca3af"}
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        >
+          {on && (
+            <animate attributeName="opacity" values="1;0.6;1" dur="1.5s" repeatCount="indefinite" />
+          )}
+        </path>
+
+        {/* Screw base */}
+        <rect x="24" y="46" width="16" height="3" rx="0" fill={on ? "#991b1b" : "#6b7280"} />
+        <rect x="25" y="49" width="14" height="2.5" rx="0" fill={on ? "#7f1d1d" : "#4b5563"} />
+        <rect x="26" y="51.5" width="12" height="2.5" rx="0" fill={on ? "#991b1b" : "#6b7280"} />
+        <rect x="28" y="54" width="8" height="2" rx="0" fill={on ? "#7f1d1d" : "#4b5563"} />
+
+        {/* Light rays when on */}
+        {on && (
+          <g stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round">
+            <line x1="32" y1="1" x2="32" y2="4">
+              <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" />
+            </line>
+            <line x1="52" y1="10" x2="50" y2="12">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" repeatCount="indefinite" />
+            </line>
+            <line x1="12" y1="10" x2="14" y2="12">
+              <animate attributeName="opacity" values="0.6;1;0.6" dur="1.2s" repeatCount="indefinite" />
+            </line>
+            <line x1="56" y1="24" x2="53" y2="24">
+              <animate attributeName="opacity" values="1;0.5;1" dur="1.4s" repeatCount="indefinite" />
+            </line>
+            <line x1="8" y1="24" x2="11" y2="24">
+              <animate attributeName="opacity" values="0.5;1;0.5" dur="1.4s" repeatCount="indefinite" />
+            </line>
+          </g>
+        )}
+      </svg>
+    </div>
+  )
+}
 
 const NAV_ITEMS = [
   {
@@ -38,13 +119,7 @@ export default function Sidebar() {
           CVRS &middot; v2.4.1
         </div>
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-5 h-5 flex-shrink-0" style={{ background: "#7f1d1d" }}>
-            <svg viewBox="0 0 20 20" fill="none" className="w-full h-full p-0.5">
-              <circle cx="10" cy="8" r="4" stroke="#fca5a5" strokeWidth="1.5" />
-              <path d="M10 12v6" stroke="#fca5a5" strokeWidth="1.5" />
-              <path d="M6 18h8" stroke="#fca5a5" strokeWidth="1.5" />
-            </svg>
-          </div>
+          <LightBulb />
           <span className="tracking-[0.12em] uppercase" style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", color: "#1f2937" }}>
             BeamLedger
           </span>
