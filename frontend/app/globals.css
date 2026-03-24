@@ -6,7 +6,7 @@
 
 body {
   font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #0d0d10;
+  background: #ffffff;
 }
 
 code, pre, .mono {
@@ -21,9 +21,9 @@ code, pre, .mono {
 /* Native input/select/textarea baseline */
 input, select, textarea {
   font-family: 'IBM Plex Sans', sans-serif;
-  background: #07070a;
-  color: #e5e5f0;
-  border: 1px solid #1e1e2a;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
   outline: none;
 }
 
@@ -32,8 +32,8 @@ input:focus, select:focus, textarea:focus {
 }
 
 select option {
-  background: #0a0a0d;
-  color: #e5e5f0;
+  background: #ffffff;
+  color: #1f2937;
 }
 
 /* Scrollbar styling */
@@ -42,11 +42,11 @@ select option {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #09090c;
+  background: #f5f5f5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a1515;
+  background: #d4b0b0;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a1a1a;
+  background: #c09090;
 }

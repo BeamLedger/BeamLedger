@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <div className="flex h-screen bg-[#0d0d10] overflow-hidden" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+        <div className="flex h-screen bg-white overflow-hidden" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
           <Sidebar />
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             {children}
@@ -22,9 +22,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           position="top-right"
           toastOptions={{
             style: {
-              background: '#0d0d10',
-              border: '1px solid #1e1e26',
-              color: '#e5e5f0',
+              background: '#ffffff',
+              border: '1px solid #e5e7eb',
+              color: '#1f2937',
               borderRadius: 0,
             },
           }}
