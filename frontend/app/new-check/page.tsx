@@ -240,7 +240,7 @@ export default function NewCheckPage() {
                     {/* Table header */}
                     <div
                       className="grid border-b border-[#e5e7eb]"
-                      style={{ gridTemplateColumns: "36px 130px 1fr 120px", background: "#f9fafb" }}
+                      style={{ gridTemplateColumns: "36px 130px 1fr 160px", background: "#f9fafb" }}
                     >
                       {["", "STANDARD", "DESCRIPTION", "CATEGORY"].map((h) => (
                         <div
@@ -261,7 +261,7 @@ export default function NewCheckPage() {
                           key={std.id}
                           className="grid border-b border-[#f0f0f2] cursor-pointer transition-colors"
                           style={{
-                            gridTemplateColumns: "36px 130px 1fr 120px",
+                            gridTemplateColumns: "36px 130px 1fr 160px",
                             background: checked ? "rgba(127,29,29,0.06)" : idx % 2 === 0 ? "#ffffff" : "#fafafa",
                             borderLeft: checked ? "2px solid #991b1b" : "2px solid transparent",
                           }}
@@ -298,9 +298,9 @@ export default function NewCheckPage() {
                               {std.description}
                             </span>
                           </div>
-                          <div className="px-4 py-2.5 flex items-center">
+                          <div className="px-3 py-2.5 flex items-center overflow-hidden">
                             <span
-                              className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] tracking-widest uppercase border"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 text-[8px] tracking-wider uppercase border whitespace-nowrap max-w-full overflow-hidden text-ellipsis"
                               style={{ ...mono, color: meta.color, background: meta.bg, borderColor: meta.border }}
                             >
                               {getCatIcon(std.category)} {meta.label}
