@@ -315,7 +315,7 @@ export default function DashboardPage() {
             {["ASSET TAG", "FIXTURE NAME", "MANUFACTURER", "SPACE TYPE", "SCORE", "STANDARDS", "STATUS", ""].map((h) => (
               <div
                 key={h || "actions"}
-                className="px-3 py-2.5 text-[9px] tracking-[0.15em] uppercase"
+                className="px-3 py-2.5 text-[9px] tracking-[0.15em] uppercase whitespace-nowrap"
                 style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}
               >
                 {h}

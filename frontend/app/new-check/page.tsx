@@ -297,9 +297,9 @@ export default function NewCheckPage() {
                               {std.description}
                             </span>
                           </div>
-                          <div className="px-3 py-2.5 flex items-center overflow-hidden">
+                          <div className="px-3 py-2.5 flex items-center">
                             <span
-                              className="inline-flex items-center gap-1 px-2 py-0.5 text-[8px] tracking-wider uppercase border whitespace-nowrap max-w-full overflow-hidden text-ellipsis"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 text-[8px] tracking-wider uppercase border whitespace-nowrap"
                               style={{ ...mono, color: meta.color, background: meta.bg, borderColor: meta.border }}
                             >
                               {getCatIcon(std.category)} {meta.label}

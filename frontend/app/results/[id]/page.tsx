@@ -203,7 +203,7 @@ export default function ResultsPage() {
           <div
             className="grid border-b border-[#e5e7eb]"
             style={{
-              gridTemplateColumns: "24px 130px 100px 1fr 180px 90px",
+              gridTemplateColumns: "24px 150px 120px 1fr 180px 90px",
               background: "#f9fafb",
             }}
           >
@@ -226,7 +226,7 @@ export default function ResultsPage() {
                 key={std.id}
                 className="grid border-b border-[#f0f0f2]"
                 style={{
-                  gridTemplateColumns: "24px 130px 100px 1fr 180px 90px",
+                  gridTemplateColumns: "24px 150px 120px 1fr 180px 90px",
                   background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
                   borderLeft: `2px solid ${passedRow ? "#86efac" : std.status === "failed" ? "#fca5a5" : "#fcd34d"}`,
                 }}

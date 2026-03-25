@@ -302,7 +302,7 @@ export default function ComplianceMapPage() {
           <div className="border border-t-0" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
             <div className="grid border-b" style={{ gridTemplateColumns: "1fr 90px 90px 80px 100px 100px", background: colors.bg.panel, borderColor: colors.border.default }}>
               {["FIXTURE", "WATTAGE", "LUMENS", "SCORE", "LPD", "STATUS"].map((h) => (
-                <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
+                <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase whitespace-nowrap" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
               ))}
             </div>
             {selectedZoneData.fixtures.map((item, idx) => {

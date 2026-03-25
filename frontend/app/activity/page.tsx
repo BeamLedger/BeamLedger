@@ -284,7 +284,7 @@ export default function ActivityPage() {
                   <span className="text-[11px]" style={{ fontWeight: 500, color: colors.text.primary }}>{c.fixtureName}</span>
                   <span className="text-[9px]" style={{ ...mono, color: colors.text.muted }}>{c.fixtureId}</span>
                 </div>
-                <p className="text-[12px] mb-1" style={{ color: colors.text.secondary }}>"{c.content}"</p>
+                <p className="text-[12px] mb-1" style={{ color: colors.text.secondary }}>&ldquo;{c.content}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <span className="text-[10px]" style={{ color: colors.text.muted }}>{c.user}</span>
                   <span className="text-[10px]" style={{ ...mono, color: colors.text.faint }}>{timeAgo(c.timestamp)}</span>
@@ -302,7 +302,7 @@ export default function ActivityPage() {
           <div className="border border-t-0" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
             <div className="grid border-b" style={{ gridTemplateColumns: "1fr 120px 120px 120px 100px", background: colors.bg.panel, borderColor: colors.border.default }}>
               {["FIXTURE", "FIELD", "OLD VALUE", "NEW VALUE", "WHEN"].map((h) => (
-                <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
+                <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase whitespace-nowrap" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
               ))}
             </div>
             {DEMO_CHANGES.map((ch, idx) => (

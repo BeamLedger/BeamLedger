@@ -226,7 +226,7 @@ export default function ROIPage() {
         <div className="border border-t-0" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
           <div className="grid border-b" style={{ gridTemplateColumns: "1fr 100px 100px 110px 100px 100px 90px", background: colors.bg.panel, borderColor: colors.border.default }}>
             {["FIXTURE", "CURRENT W", "REPL. W", "REPL. COST", "SAVINGS/YR", "PAYBACK", "REBATE"].map((h) => (
-              <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
+              <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase whitespace-nowrap" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
             ))}
           </div>
 
@@ -323,7 +323,7 @@ export default function ROIPage() {
         <div className="border border-t-0 overflow-hidden" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
           <div className="grid border-b" style={{ gridTemplateColumns: "1fr 90px 90px 90px 80px 80px", background: colors.bg.panel, borderColor: colors.border.default }}>
             {["FIXTURE TYPE", "MIN $", "MAX $", "AVG $", "REPL. W", "DLC"].map((h) => (
-              <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
+              <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase whitespace-nowrap" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
             ))}
           </div>
           {Object.values(FIXTURE_PRICING_DB).map((p, idx) => (

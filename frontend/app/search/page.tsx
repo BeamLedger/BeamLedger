@@ -387,7 +387,7 @@ export default function SearchPage() {
             ].map((h, i) => (
               <div
                 key={h.label || `col-${i}`}
-                className={`px-3 py-2 text-[9px] tracking-[0.15em] uppercase flex items-center gap-1 ${h.field ? "cursor-pointer hover:text-[#7f1d1d]" : ""}`}
+                className={`px-3 py-2 text-[9px] tracking-[0.15em] uppercase whitespace-nowrap flex items-center gap-1 ${h.field ? "cursor-pointer hover:text-[#7f1d1d]" : ""}`}
                 style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}
                 onClick={h.field ? () => toggleSort(h.field!) : undefined}
               >
