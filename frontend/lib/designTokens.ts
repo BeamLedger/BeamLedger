@@ -83,7 +83,7 @@ export const mono = { fontFamily: font.mono } as const
 // ── Reusable style objects ──────────────────────────────────────────────────
 
 export const inputBaseClass =
-  "w-full px-3 py-2 text-[12px] border outline-none transition-colors"
+  "w-full px-3 py-2.5 text-[13px] leading-normal border outline-none transition-colors"
 
 export const inputBaseStyle = {
   background: colors.bg.page,

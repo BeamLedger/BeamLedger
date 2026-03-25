@@ -67,7 +67,7 @@ export default function NewCheckPage() {
   }
 
   const inputClass =
-    "w-full px-3 py-2 text-[12px] border outline-none transition-colors"
+    "w-full px-3 py-2.5 text-[13px] leading-normal border outline-none transition-colors"
   const inputStyle = {
     background: "#ffffff",
     borderColor: "#e5e7eb",

@@ -124,7 +124,7 @@ export default function SettingsPage() {
   const [maxCct, setMaxCct] = useState("")
   const [minCri, setMinCri] = useState("")
 
-  const inputClass = "w-full px-3 py-2 text-[12px] border outline-none transition-colors"
+  const inputClass = "w-full px-3 py-2.5 text-[13px] leading-normal border outline-none transition-colors"
   const inputStyle = { background: colors.bg.page, borderColor: colors.border.default, color: colors.text.primary }
 
   const tabs: { key: Tab; label: string; icon: typeof Settings }[] = [
@@ -235,7 +235,7 @@ export default function SettingsPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
               />
               <select
-                className="px-3 py-2 text-[12px] border outline-none"
+                className="px-3 py-2.5 text-[13px] leading-normal border outline-none"
                 style={{ ...inputStyle, appearance: "none", width: "140px" }}
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}

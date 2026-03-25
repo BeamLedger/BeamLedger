@@ -98,7 +98,7 @@ export default function ROIPage() {
             <label className="block text-[9px] tracking-widest uppercase mb-1.5" style={{ ...mono, color: colors.text.tertiary }}>Utility Rate ($/kWh)</label>
             <input
               type="number" step="0.01" min="0.01"
-              className="w-full px-3 py-2 text-[12px] border outline-none"
+              className="w-full px-3 py-2.5 text-[13px] leading-normal border outline-none"
               style={{ borderColor: colors.border.default, color: colors.text.primary }}
               value={utilityRate}
               onChange={(e) => setUtilityRate(Number(e.target.value) || 0.01)}
@@ -108,7 +108,7 @@ export default function ROIPage() {
             <label className="block text-[9px] tracking-widest uppercase mb-1.5" style={{ ...mono, color: colors.text.tertiary }}>Annual Operating Hours</label>
             <input
               type="number" step="100" min="100"
-              className="w-full px-3 py-2 text-[12px] border outline-none"
+              className="w-full px-3 py-2.5 text-[13px] leading-normal border outline-none"
               style={{ borderColor: colors.border.default, color: colors.text.primary }}
               value={annualHours}
               onChange={(e) => setAnnualHours(Number(e.target.value) || 100)}
