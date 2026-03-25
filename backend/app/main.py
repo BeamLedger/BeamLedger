@@ -4,7 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
 from .api import auth, organizations, sites, zones, fixtures, rules, replacements, analytics
+from .api import activity, integrations, roi
 from .models.import_audit import ImportAudit  # ensure table creation
+from .models.activity_log import ActivityLog  # noqa
+from .models.comment import Comment  # noqa
+from .models.api_key import ApiKey  # noqa
+from .models.webhook import Webhook  # noqa
+from .models.fixture_change import FixtureChange  # noqa
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -32,6 +38,9 @@ app.include_router(fixtures.router)
 app.include_router(rules.router)
 app.include_router(replacements.router)
 app.include_router(analytics.router)
+app.include_router(activity.router)
+app.include_router(integrations.router)
+app.include_router(roi.router)
 
 
 @app.get("/")

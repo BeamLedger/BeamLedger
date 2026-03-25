@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, PlusSquare, FileText, Search, Upload } from 'lucide-react'
+import { LayoutDashboard, PlusSquare, FileText, Search, Upload, DollarSign, Map, Activity, Settings } from 'lucide-react'
 
 function LightBulb() {
   const [on, setOn] = useState(true)
@@ -86,9 +86,17 @@ const NAV_ITEMS = [
     ],
   },
   {
+    section: "ANALYSIS",
+    links: [
+      { to: "/roi", label: "ROI Analysis", icon: DollarSign, exact: false },
+      { to: "/compliance-map", label: "Compliance Map", icon: Map, exact: false },
+    ],
+  },
+  {
     section: "RECORDS",
     links: [
       { to: "/results/1", label: "Recent Reports", icon: FileText, exact: false },
+      { to: "/activity", label: "Activity Trail", icon: Activity, exact: false },
     ],
   },
 ]
