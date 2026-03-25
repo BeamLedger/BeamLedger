@@ -163,7 +163,7 @@ export default function DashboardPage() {
           <div
             className="grid border-b border-[#e5e7eb]"
             style={{
-              gridTemplateColumns: "90px 1fr 150px 130px 70px 100px 120px 40px",
+              gridTemplateColumns: "90px 1fr 130px 120px 90px 80px 150px 40px",
               background: "#f9fafb",
             }}
           >
@@ -188,18 +188,18 @@ export default function DashboardPage() {
             return (
               <div
                 key={fx.id}
-                className="grid border-b border-[#f0f0f2] transition-colors hover:!bg-[#f5f5fa]"
+                className="grid border-b border-[#f0f0f2] transition-colors hover:!bg-[#f5f5fa] min-w-0"
                 style={{
-                  gridTemplateColumns: "90px 1fr 150px 130px 70px 100px 120px 40px",
+                  gridTemplateColumns: "90px 1fr 130px 120px 90px 80px 150px 40px",
                   background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
                 }}
               >
-                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-3 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span className="text-[10px]" style={{ ...mono, color: "#6b7280" }}>
                     {fx.assetTag}
                   </span>
                 </div>
-                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-3 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <div className="min-w-0">
                     <span className="text-[12px] block truncate" style={{ fontWeight: 500, color: "#1f2937" }}>
                       {fx.fixtureName}
@@ -209,27 +209,27 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 </div>
-                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-3 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span className="text-[11px] truncate" style={{ color: "#6b7280" }}>
                     {fx.manufacturer}
                   </span>
                 </div>
-                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-3 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span className="text-[10px] truncate" style={{ color: "#6b7280" }}>
                     {fx.spaceType}
                   </span>
                 </div>
-                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-3 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span className="text-[11px]" style={{ ...mono, fontWeight: 600, color: scoreColor }}>
                     {score}%
                   </span>
                 </div>
-                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-3 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span className="text-[9px]" style={{ ...mono, color: "#9ca3af" }}>
                     {fx.applicableStandards.length} std{fx.applicableStandards.length !== 1 ? "s" : ""}
                   </span>
                 </div>
-                <div className="px-3 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-3 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <StatusStamp status={ev.overallStatus} />
                 </div>
                 <div className="px-2 py-3 flex items-center justify-center">

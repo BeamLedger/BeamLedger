@@ -244,12 +244,12 @@ export default function ResultsPage() {
                     <AlertCircle size={12} color="#d97706" />
                   )}
                 </div>
-                <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-4 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span className="text-[11px]" style={{ ...mono, fontWeight: 600, color: "#1f2937" }}>
                     {std.name}
                   </span>
                 </div>
-                <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-4 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span
                     className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] tracking-widest uppercase border"
                     style={{ ...mono, color: meta.color, background: meta.bg, borderColor: meta.border }}
@@ -257,7 +257,7 @@ export default function ResultsPage() {
                     {getCatIcon(std.category)} {meta.label}
                   </span>
                 </div>
-                <div className="px-4 py-3 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                <div className="px-4 py-3 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                   <span className="text-[11px]" style={{ color: "#6b7280" }}>
                     {std.description}
                   </span>

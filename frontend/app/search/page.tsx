@@ -75,14 +75,14 @@ function StatusBadge({ status }: { status: ComplianceStatus }) {
 function ScoreBar({ score }: { score: number }) {
   const color = score >= 80 ? "#16a34a" : score >= 50 ? "#d97706" : "#dc2626"
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+    <div className="flex items-center gap-1.5 min-w-0">
+      <div className="flex-1 h-1.5 bg-gray-200 overflow-hidden" style={{ minWidth: 0, maxWidth: "48px" }}>
         <div
-          className="h-full rounded-full transition-all"
+          className="h-full transition-all"
           style={{ width: `${score}%`, background: color }}
         />
       </div>
-      <span className="text-[10px]" style={{ ...mono, color }}>
+      <span className="text-[10px] flex-shrink-0" style={{ ...mono, color }}>
         {score}%
       </span>
     </div>
@@ -445,7 +445,7 @@ export default function SearchPage() {
           <div
             className="grid border-b border-[#e5e7eb]"
             style={{
-              gridTemplateColumns: "90px 1fr 150px 80px 80px 100px 90px 80px 40px",
+              gridTemplateColumns: "80px 1fr 120px 70px 70px 100px 110px 120px 36px",
               background: "#f9fafb",
             }}
           >
@@ -487,18 +487,18 @@ export default function SearchPage() {
               return (
                 <div
                   key={fx.id}
-                  className="grid border-b border-[#f0f0f2] transition-colors hover:!bg-[#f5f5fa]"
+                  className="grid border-b border-[#f0f0f2] transition-colors hover:!bg-[#f5f5fa] min-w-0"
                   style={{
-                    gridTemplateColumns: "90px 1fr 150px 80px 80px 100px 90px 80px 40px",
+                    gridTemplateColumns: "80px 1fr 120px 70px 70px 100px 110px 120px 36px",
                     background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
                   }}
                 >
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <span className="text-[10px] truncate" style={{ ...mono, color: "#6b7280" }}>
                       <HighlightText text={fx.assetTag} query={debouncedQuery} />
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <div className="min-w-0">
                       <div className="text-[12px] truncate" style={{ fontWeight: 500, color: "#1f2937" }}>
                         <HighlightText text={fx.fixtureName} query={debouncedQuery} />
@@ -508,30 +508,30 @@ export default function SearchPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <span className="text-[11px] truncate" style={{ color: "#6b7280" }}>
                       <HighlightText text={fx.manufacturer} query={debouncedQuery} />
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <span className="text-[11px]" style={{ ...mono, color: "#4b5563" }}>
                       {fx.wattage}W
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <span className="text-[11px]" style={{ ...mono, color: "#4b5563" }}>
                       {fx.lumenOutput}
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <span className="text-[10px] truncate" style={{ color: "#6b7280" }}>
                       <HighlightText text={fx.spaceType} query={debouncedQuery} />
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <ScoreBar score={score} />
                   </div>
-                  <div className="px-3 py-2.5 flex items-center" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
                     <StatusBadge status={ev.overallStatus} />
                   </div>
                   <div className="px-1 py-2.5 flex items-center justify-center">
