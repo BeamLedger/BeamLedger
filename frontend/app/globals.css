@@ -57,3 +57,29 @@ select option {
 ::-webkit-scrollbar-thumb:hover {
   background: #c09090;
 }
+
+/* Print styles */
+@media print {
+  body {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  aside {
+    display: none !important;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+
+  @page {
+    margin: 0.5in;
+    size: letter;
+  }
+}

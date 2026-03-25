@@ -15,8 +15,7 @@ import {
   Leaf,
   FileText,
 } from "lucide-react"
-
-const mono = { fontFamily: "'Ubin Sans', monospace" } as const
+import { mono } from "../../../lib/designTokens"
 
 const CATEGORY_META: Record<string, { color: string; bg: string; border: string; label: string }> = {
   Safety:        { color: "#2563eb", bg: "#eff6ff", border: "#93c5fd", label: "SAFETY" },

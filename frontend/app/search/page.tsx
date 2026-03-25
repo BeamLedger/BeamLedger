@@ -1,17 +1,22 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import {
-  Search, Filter, ChevronDown, ChevronUp, CheckCircle2, XCircle,
-  AlertCircle, ArrowRight, ArrowUpDown, X, Calendar, Download,
+  Search, Filter, ChevronDown, ChevronUp, ArrowRight, ArrowUpDown, X, Download,
 } from "lucide-react"
 import { sampleFixtures } from "../../lib/compliance/sampleData"
 import { evaluateFixture, computeComplianceScore } from "../../lib/compliance/engine"
 import { STANDARD_DEFINITIONS } from "../../lib/compliance/standards"
+import { colors, mono, scoreColor } from "../../lib/designTokens"
+import type { StatusKey } from "../../lib/designTokens"
 import type { Fixture, ComplianceStatus, StandardId, SortField, SortDirection, FixtureEvaluation } from "../../lib/compliance/types"
-
-const mono = { fontFamily: "'Ubin Sans', monospace" } as const
+import PageHeader from "../../components/PageHeader"
+import StatCard from "../../components/StatCard"
+import SectionHeader from "../../components/SectionHeader"
+import FooterBar from "../../components/FooterBar"
+import StatusBadge from "../../components/StatusBadge"
+import ScoreBarComponent from "../../components/ScoreBar"
 
 // ── Debounce hook ────────────────────────────────────────────────────────────
 
@@ -36,56 +41,12 @@ function HighlightText({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         pattern.test(part) ? (
-          <mark
-            key={i}
-            style={{ background: "#fef08a", color: "#1f2937", padding: "0 1px", borderRadius: "1px" }}
-          >
-            {part}
-          </mark>
+          <mark key={i} style={{ background: "#fef08a", color: colors.text.primary, padding: "0 1px" }}>{part}</mark>
         ) : (
           <span key={i}>{part}</span>
         )
       )}
     </>
-  )
-}
-
-// ── Status badge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: ComplianceStatus }) {
-  const config: Record<ComplianceStatus, { color: string; bg: string; border: string; label: string; Icon: typeof CheckCircle2 }> = {
-    pass:       { color: "#16a34a", bg: "#f0fdf4", border: "#86efac", label: "PASS",       Icon: CheckCircle2 },
-    fail:       { color: "#dc2626", bg: "#fef2f2", border: "#fca5a5", label: "FAIL",       Icon: XCircle },
-    exempt:     { color: "#2563eb", bg: "#eff6ff", border: "#93c5fd", label: "EXEMPT",     Icon: AlertCircle },
-    data_error: { color: "#d97706", bg: "#fffbeb", border: "#fcd34d", label: "DATA ERROR", Icon: AlertCircle },
-  }
-  const c = config[status]
-  return (
-    <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] tracking-widest uppercase border whitespace-nowrap"
-      style={{ ...mono, color: c.color, background: c.bg, borderColor: c.border }}
-    >
-      <c.Icon size={9} /> {c.label}
-    </span>
-  )
-}
-
-// ── Score bar ────────────────────────────────────────────────────────────────
-
-function ScoreBar({ score }: { score: number }) {
-  const color = score >= 80 ? "#16a34a" : score >= 50 ? "#d97706" : "#dc2626"
-  return (
-    <div className="flex items-center gap-1.5 min-w-0">
-      <div className="flex-1 h-1.5 bg-gray-200 overflow-hidden" style={{ minWidth: 0, maxWidth: "48px" }}>
-        <div
-          className="h-full transition-all"
-          style={{ width: `${score}%`, background: color }}
-        />
-      </div>
-      <span className="text-[10px] flex-shrink-0" style={{ ...mono, color }}>
-        {score}%
-      </span>
-    </div>
   )
 }
 
@@ -98,7 +59,7 @@ function FilterCheckbox({
     <label className="flex items-center gap-2 cursor-pointer py-0.5">
       <div
         className="w-3 h-3 border flex items-center justify-center flex-shrink-0"
-        style={{ borderColor: checked ? (color || "#991b1b") : "#d1d5db", background: checked ? (color || "#991b1b") : "transparent" }}
+        style={{ borderColor: checked ? (color || colors.maroon[700]) : colors.text.faint, background: checked ? (color || colors.maroon[700]) : "transparent" }}
       >
         {checked && (
           <svg viewBox="0 0 10 10" className="w-2 h-2" fill="none">
@@ -106,8 +67,40 @@ function FilterCheckbox({
           </svg>
         )}
       </div>
-      <span className="text-[11px]" style={{ color: color || "#4b5563" }}>{label}</span>
+      <span className="text-[11px]" style={{ color: color || colors.text.secondary }}>{label}</span>
     </label>
+  )
+}
+
+// ── Score Histogram ──────────────────────────────────────────────────────────
+
+function ScoreHistogram({ scores }: { scores: number[] }) {
+  const buckets = [
+    { label: "0-20", min: 0, max: 20 },
+    { label: "21-40", min: 21, max: 40 },
+    { label: "41-60", min: 41, max: 60 },
+    { label: "61-80", min: 61, max: 80 },
+    { label: "81-100", min: 81, max: 100 },
+  ]
+  const counts = buckets.map((b) => scores.filter((s) => s >= b.min && s <= b.max).length)
+  const max = Math.max(...counts, 1)
+
+  return (
+    <div className="flex items-end gap-1" style={{ height: 40 }}>
+      {buckets.map((b, i) => (
+        <div key={b.label} className="flex-1 flex flex-col items-center gap-0.5">
+          <div
+            className="w-full transition-all"
+            style={{
+              height: `${Math.max(2, (counts[i] / max) * 32)}px`,
+              background: scoreColor((b.min + b.max) / 2),
+              opacity: counts[i] === 0 ? 0.2 : 1,
+            }}
+          />
+          <span className="text-[7px]" style={{ ...mono, color: colors.text.muted }}>{b.label}</span>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -139,86 +132,52 @@ export default function SearchPage() {
   }, [])
 
   const toggleStatus = (s: ComplianceStatus) => {
-    setStatusFilters((prev) => {
-      const next = new Set(prev)
-      if (next.has(s)) next.delete(s); else next.add(s)
-      return next
-    })
+    setStatusFilters((prev) => { const next = new Set(prev); if (next.has(s)) next.delete(s); else next.add(s); return next })
   }
-
   const toggleStandard = (s: StandardId) => {
-    setStandardFilters((prev) => {
-      const next = new Set(prev)
-      if (next.has(s)) next.delete(s); else next.add(s)
-      return next
-    })
+    setStandardFilters((prev) => { const next = new Set(prev); if (next.has(s)) next.delete(s); else next.add(s); return next })
   }
-
   const toggleSource = (s: string) => {
-    setSourceFilters((prev) => {
-      const next = new Set(prev)
-      if (next.has(s)) next.delete(s); else next.add(s)
-      return next
-    })
+    setSourceFilters((prev) => { const next = new Set(prev); if (next.has(s)) next.delete(s); else next.add(s); return next })
   }
-
   const clearFilters = () => {
-    setStatusFilters(new Set())
-    setStandardFilters(new Set())
-    setSourceFilters(new Set())
-    setDateFrom("")
-    setDateTo("")
+    setStatusFilters(new Set()); setStandardFilters(new Set()); setSourceFilters(new Set()); setDateFrom(""); setDateTo("")
   }
-
   const hasActiveFilters = statusFilters.size > 0 || standardFilters.size > 0 || sourceFilters.size > 0 || dateFrom || dateTo
 
   // Filter + search + sort
   const filteredFixtures = useMemo(() => {
     let list = [...sampleFixtures]
 
-    // Text search
+    // Text search — each field searched individually for proper matching
     if (debouncedQuery.trim()) {
       const terms = debouncedQuery.toLowerCase().split(/\s+/).filter(Boolean)
       list = list.filter((fx) => {
-        const searchable = [
+        const fields = [
           fx.id, fx.assetTag, fx.fixtureName, fx.manufacturer, fx.model,
           fx.fixtureType, String(fx.wattage), String(fx.lumenOutput),
           String(fx.cct), String(fx.cri), fx.spaceType,
           ...fx.applicableStandards.map((s) => STANDARD_DEFINITIONS[s]?.name ?? s),
-        ].join(" ").toLowerCase()
-        return terms.every((t) => searchable.includes(t))
+        ].map((f) => f.toLowerCase())
+        return terms.every((t) => fields.some((f) => f.includes(t)))
       })
     }
 
     // Compliance status filter
     if (statusFilters.size > 0) {
-      list = list.filter((fx) => {
-        const ev = evaluations.get(fx.id)
-        return ev && statusFilters.has(ev.overallStatus)
-      })
+      list = list.filter((fx) => { const ev = evaluations.get(fx.id); return ev && statusFilters.has(ev.overallStatus) })
     }
-
     // Standard filter
     if (standardFilters.size > 0) {
-      list = list.filter((fx) =>
-        fx.applicableStandards.some((s) => standardFilters.has(s))
-      )
+      list = list.filter((fx) => fx.applicableStandards.some((s) => standardFilters.has(s)))
     }
-
     // Source filter
     if (sourceFilters.size > 0) {
       list = list.filter((fx) => sourceFilters.has(fx.importSource))
     }
-
     // Date range
-    if (dateFrom) {
-      const from = new Date(dateFrom).getTime()
-      list = list.filter((fx) => new Date(fx.importedAt).getTime() >= from)
-    }
-    if (dateTo) {
-      const to = new Date(dateTo).getTime() + 86400000
-      list = list.filter((fx) => new Date(fx.importedAt).getTime() <= to)
-    }
+    if (dateFrom) { const from = new Date(dateFrom).getTime(); list = list.filter((fx) => new Date(fx.importedAt).getTime() >= from) }
+    if (dateTo) { const to = new Date(dateTo).getTime() + 86400000; list = list.filter((fx) => new Date(fx.importedAt).getTime() <= to) }
 
     // Sort
     list.sort((a, b) => {
@@ -239,12 +198,8 @@ export default function SearchPage() {
   }, [debouncedQuery, statusFilters, standardFilters, sourceFilters, dateFrom, dateTo, sortField, sortDir, evaluations])
 
   const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDir((d) => (d === "desc" ? "asc" : "desc"))
-    } else {
-      setSortField(field)
-      setSortDir("desc")
-    }
+    if (sortField === field) setSortDir((d) => (d === "desc" ? "asc" : "desc"))
+    else { setSortField(field); setSortDir("desc") }
   }
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -266,39 +221,57 @@ export default function SearchPage() {
     return { pass, fail, error, exempt, total: filteredFixtures.length }
   }, [filteredFixtures, evaluations])
 
+  // Score distribution for histogram
+  const scores = useMemo(() => {
+    return filteredFixtures.map((fx) => computeComplianceScore(evaluations.get(fx.id)?.results ?? []))
+  }, [filteredFixtures, evaluations])
+
+  // CSV export
+  const exportCSV = () => {
+    const header = "Asset Tag,Fixture Name,Manufacturer,Type,Wattage,Lumens,CCT,CRI,Space Type,Score,Status\n"
+    const rows = filteredFixtures.map((fx) => {
+      const ev = evaluations.get(fx.id)!
+      const score = computeComplianceScore(ev.results)
+      return [fx.assetTag, `"${fx.fixtureName}"`, `"${fx.manufacturer}"`, fx.fixtureType, fx.wattage, fx.lumenOutput, fx.cct, fx.cri, fx.spaceType, score, ev.overallStatus].join(",")
+    }).join("\n")
+    const blob = new Blob([header + rows], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = "beamledger-fixtures.csv"; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="flex-1 overflow-auto p-6 space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between border-b border-[#e5e7eb] pb-4">
-        <div>
-          <p className="text-[10px] tracking-[0.2em] uppercase mb-1" style={{ ...mono, color: "#6b7280" }}>
-            Module: Fixture Search & Compliance
-          </p>
-          <h1 className="tracking-tight" style={{ fontSize: "20px", fontWeight: 600, color: "#1f2937" }}>
-            Search Fixtures
-          </h1>
-          <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
-            Real-time search across all fixture data with compliance evaluation
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        module="Fixture Search & Compliance"
+        title="Search Fixtures"
+        subtitle="Real-time search across all fixture data with compliance evaluation"
+        actions={
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-2 px-4 py-2 text-[11px] tracking-widest uppercase border transition-colors hover:opacity-90"
+            style={{ ...mono, background: colors.bg.panel, borderColor: colors.border.default, color: colors.text.tertiary }}
+          >
+            <Download size={12} /> Export CSV
+          </button>
+        }
+      />
 
       {/* Search bar */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#9ca3af" }} />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: colors.text.muted }} />
           <input
             className="w-full pl-9 pr-8 py-2.5 text-[12px] border outline-none transition-colors"
-            style={{ background: "#ffffff", borderColor: "#e5e7eb", color: "#1f2937" }}
+            style={{ background: colors.bg.page, borderColor: colors.border.default, color: colors.text.primary }}
             placeholder="Search by ID, name, manufacturer, wattage, CCT, CRI, space type, standard..."
             value={rawQuery}
             onChange={(e) => setRawQuery(e.target.value)}
           />
           {rawQuery && (
-            <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280]"
-              onClick={() => setRawQuery("")}
-            >
+            <button className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: colors.text.muted }} onClick={() => setRawQuery("")}>
               <X size={12} />
             </button>
           )}
@@ -307,100 +280,64 @@ export default function SearchPage() {
           className="flex items-center gap-2 px-4 py-2 text-[10px] tracking-widest uppercase border transition-colors"
           style={{
             ...mono,
-            background: showFilters ? "rgba(127,29,29,0.08)" : "#f9fafb",
-            borderColor: showFilters ? "#991b1b" : "#e5e7eb",
-            color: showFilters ? "#7f1d1d" : "#6b7280",
+            background: showFilters ? colors.maroon[100] : colors.bg.panel,
+            borderColor: showFilters ? colors.maroon[700] : colors.border.default,
+            color: showFilters ? colors.maroon[800] : colors.text.tertiary,
           }}
           onClick={() => setShowFilters(!showFilters)}
         >
-          <Filter size={12} />
-          Filters
-          {hasActiveFilters && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#991b1b]" />
-          )}
+          <Filter size={12} /> Filters
+          {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full" style={{ background: colors.maroon[700] }} />}
         </button>
       </div>
 
       {/* Filter pane */}
       {showFilters && (
-        <div className="border border-[#e5e7eb] p-4" style={{ background: "#fafafa" }}>
+        <div className="border p-4" style={{ borderColor: colors.border.default, background: colors.bg.alt }}>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] tracking-widest uppercase" style={{ ...mono, color: "#6b7280" }}>
-              Filter Options
-            </span>
+            <span className="text-[10px] tracking-widest uppercase" style={{ ...mono, color: colors.text.tertiary }}>Filter Options</span>
             {hasActiveFilters && (
-              <button
-                className="text-[10px] tracking-widest uppercase hover:underline"
-                style={{ ...mono, color: "#991b1b" }}
-                onClick={clearFilters}
-              >
+              <button className="text-[10px] tracking-widest uppercase hover:underline" style={{ ...mono, color: colors.maroon[700] }} onClick={clearFilters}>
                 Clear All
               </button>
             )}
           </div>
           <div className="grid grid-cols-4 gap-6">
-            {/* Compliance Status */}
             <div>
-              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: "#9ca3af" }}>
-                Compliance Status
-              </div>
+              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: colors.text.muted }}>Compliance Status</div>
               <div className="space-y-1">
-                <FilterCheckbox label="Pass" checked={statusFilters.has("pass")} onChange={() => toggleStatus("pass")} color="#16a34a" />
-                <FilterCheckbox label="Fail" checked={statusFilters.has("fail")} onChange={() => toggleStatus("fail")} color="#dc2626" />
-                <FilterCheckbox label="Exempt" checked={statusFilters.has("exempt")} onChange={() => toggleStatus("exempt")} color="#2563eb" />
-                <FilterCheckbox label="Data Error" checked={statusFilters.has("data_error")} onChange={() => toggleStatus("data_error")} color="#d97706" />
+                <FilterCheckbox label="Pass" checked={statusFilters.has("pass")} onChange={() => toggleStatus("pass")} color={colors.pass.fg} />
+                <FilterCheckbox label="Fail" checked={statusFilters.has("fail")} onChange={() => toggleStatus("fail")} color={colors.fail.fg} />
+                <FilterCheckbox label="Exempt" checked={statusFilters.has("exempt")} onChange={() => toggleStatus("exempt")} color={colors.exempt.fg} />
+                <FilterCheckbox label="Data Error" checked={statusFilters.has("data_error")} onChange={() => toggleStatus("data_error")} color={colors.dataError.fg} />
               </div>
             </div>
-
-            {/* Standards */}
             <div>
-              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: "#9ca3af" }}>
-                Standard
-              </div>
+              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: colors.text.muted }}>Standard</div>
               <div className="space-y-1">
                 {(Object.entries(STANDARD_DEFINITIONS) as [StandardId, { name: string }][]).map(([id, def]) => (
                   <FilterCheckbox key={id} label={def.name} checked={standardFilters.has(id)} onChange={() => toggleStandard(id)} />
                 ))}
               </div>
             </div>
-
-            {/* Import Source */}
             <div>
-              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: "#9ca3af" }}>
-                Import Source
-              </div>
+              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: colors.text.muted }}>Import Source</div>
               <div className="space-y-1">
                 <FilterCheckbox label="Manual" checked={sourceFilters.has("manual")} onChange={() => toggleSource("manual")} />
                 <FilterCheckbox label="CSV" checked={sourceFilters.has("csv")} onChange={() => toggleSource("csv")} />
                 <FilterCheckbox label="XLSX" checked={sourceFilters.has("xlsx")} onChange={() => toggleSource("xlsx")} />
               </div>
             </div>
-
-            {/* Date Range */}
             <div>
-              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: "#9ca3af" }}>
-                Date Imported
-              </div>
+              <div className="text-[9px] tracking-widest uppercase mb-2" style={{ ...mono, color: colors.text.muted }}>Date Imported</div>
               <div className="space-y-2">
                 <div>
-                  <label className="text-[9px] block mb-0.5" style={{ ...mono, color: "#9ca3af" }}>From</label>
-                  <input
-                    type="date"
-                    className="w-full px-2 py-1 text-[11px] border"
-                    style={{ borderColor: "#e5e7eb", color: "#4b5563" }}
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                  />
+                  <label className="text-[9px] block mb-0.5" style={{ ...mono, color: colors.text.muted }}>From</label>
+                  <input type="date" className="w-full px-2 py-1 text-[11px] border" style={{ borderColor: colors.border.default, color: colors.text.secondary }} value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
                 </div>
                 <div>
-                  <label className="text-[9px] block mb-0.5" style={{ ...mono, color: "#9ca3af" }}>To</label>
-                  <input
-                    type="date"
-                    className="w-full px-2 py-1 text-[11px] border"
-                    style={{ borderColor: "#e5e7eb", color: "#4b5563" }}
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                  />
+                  <label className="text-[9px] block mb-0.5" style={{ ...mono, color: colors.text.muted }}>To</label>
+                  <input type="date" className="w-full px-2 py-1 text-[11px] border" style={{ borderColor: colors.border.default, color: colors.text.secondary }} value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                 </div>
               </div>
             </div>
@@ -408,45 +345,33 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-5 border border-[#e5e7eb]" style={{ background: "#f9fafb" }}>
-        {[
-          { label: "TOTAL", value: stats.total, color: "#6b7280" },
-          { label: "PASS", value: stats.pass, color: "#16a34a" },
-          { label: "FAIL", value: stats.fail, color: "#dc2626" },
-          { label: "EXEMPT", value: stats.exempt, color: "#2563eb" },
-          { label: "DATA ERROR", value: stats.error, color: "#d97706" },
-        ].map((s) => (
-          <div key={s.label} className="px-4 py-2.5 border-r border-[#e5e7eb] last:border-r-0">
-            <div className="text-[9px] tracking-widest uppercase mb-1" style={{ ...mono, color: "#9ca3af" }}>
-              {s.label}
-            </div>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: s.color, ...mono }}>{s.value}</div>
+      {/* Stats strip + histogram */}
+      <div className="grid grid-cols-6 border" style={{ borderColor: colors.border.default, background: colors.bg.panel }}>
+        <StatCard label="Total" value={stats.total} color={colors.text.tertiary} />
+        <StatCard label="Pass" value={stats.pass} color={colors.pass.fg} />
+        <StatCard label="Fail" value={stats.fail} color={colors.fail.fg} />
+        <StatCard label="Exempt" value={stats.exempt} color={colors.exempt.fg} />
+        <StatCard label="Data Error" value={stats.error} color={colors.dataError.fg} />
+        <div className="px-4 py-3">
+          <div className="text-[9px] tracking-widest uppercase mb-1.5" style={{ ...mono, color: colors.text.muted }}>
+            Score Distribution
           </div>
-        ))}
+          <ScoreHistogram scores={scores} />
+        </div>
       </div>
 
       {/* Results table */}
       <div>
-        <div
-          className="flex items-center justify-between px-4 py-2 border border-b-0 border-[#e5e7eb]"
-          style={{ background: "#f9fafb" }}
-        >
-          <span className="text-[10px] tracking-widest uppercase" style={{ ...mono, color: "#6b7280" }}>
-            Search Results
-          </span>
-          <span className="text-[10px]" style={{ ...mono, color: "#9ca3af" }}>
-            {filteredFixtures.length} of {sampleFixtures.length} fixtures
-          </span>
-        </div>
+        <SectionHeader title="Search Results" right={`${filteredFixtures.length} of ${sampleFixtures.length} fixtures`} />
 
-        <div className="border border-[#e5e7eb]" style={{ background: "#ffffff" }}>
+        <div className="border border-t-0" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
           {/* Header */}
           <div
-            className="grid border-b border-[#e5e7eb]"
+            className="grid border-b"
             style={{
               gridTemplateColumns: "80px 1fr 120px 70px 70px 100px 110px 120px 36px",
-              background: "#f9fafb",
+              background: colors.bg.panel,
+              borderColor: colors.border.default,
             }}
           >
             {[
@@ -463,7 +388,7 @@ export default function SearchPage() {
               <div
                 key={h.label || `col-${i}`}
                 className={`px-3 py-2 text-[9px] tracking-[0.15em] uppercase flex items-center gap-1 ${h.field ? "cursor-pointer hover:text-[#7f1d1d]" : ""}`}
-                style={{ ...mono, color: "#6b7280", borderRight: "1px solid #f0f0f2" }}
+                style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}
                 onClick={h.field ? () => toggleSort(h.field!) : undefined}
               >
                 {h.label}
@@ -475,10 +400,8 @@ export default function SearchPage() {
           {/* Rows */}
           {filteredFixtures.length === 0 ? (
             <div className="px-5 py-10 text-center">
-              <Search size={24} style={{ color: "#d1d5db", margin: "0 auto 8px" }} />
-              <p className="text-[12px]" style={{ color: "#9ca3af" }}>
-                No fixtures match your search criteria.
-              </p>
+              <Search size={24} style={{ color: colors.text.faint, margin: "0 auto 8px" }} />
+              <p className="text-[12px]" style={{ color: colors.text.muted }}>No fixtures match your search criteria.</p>
             </div>
           ) : (
             filteredFixtures.map((fx, idx) => {
@@ -487,56 +410,53 @@ export default function SearchPage() {
               return (
                 <div
                   key={fx.id}
-                  className="grid border-b border-[#f0f0f2] transition-colors hover:!bg-[#f5f5fa] min-w-0"
+                  className="grid border-b transition-colors hover:!bg-[#f5f5fa] min-w-0"
                   style={{
                     gridTemplateColumns: "80px 1fr 120px 70px 70px 100px 110px 120px 36px",
-                    background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
+                    background: idx % 2 === 0 ? colors.bg.page : colors.bg.alt,
+                    borderColor: colors.border.light,
                   }}
                 >
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[10px] truncate" style={{ ...mono, color: "#6b7280" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[10px] truncate" style={{ ...mono, color: colors.text.tertiary }}>
                       <HighlightText text={fx.assetTag} query={debouncedQuery} />
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
                     <div className="min-w-0">
-                      <div className="text-[12px] truncate" style={{ fontWeight: 500, color: "#1f2937" }}>
+                      <div className="text-[12px] truncate" style={{ fontWeight: 500, color: colors.text.primary }}>
                         <HighlightText text={fx.fixtureName} query={debouncedQuery} />
                       </div>
-                      <div className="text-[10px] truncate" style={{ color: "#9ca3af" }}>
+                      <div className="text-[10px] truncate" style={{ color: colors.text.muted }}>
                         <HighlightText text={fx.fixtureType} query={debouncedQuery} />
                       </div>
                     </div>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[11px] truncate" style={{ color: "#6b7280" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[11px] truncate" style={{ color: colors.text.tertiary }}>
                       <HighlightText text={fx.manufacturer} query={debouncedQuery} />
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[11px]" style={{ ...mono, color: "#4b5563" }}>
-                      {fx.wattage}W
-                    </span>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[11px]" style={{ ...mono, color: colors.text.secondary }}>{fx.wattage}W</span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[11px]" style={{ ...mono, color: "#4b5563" }}>
-                      {fx.lumenOutput}
-                    </span>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[11px]" style={{ ...mono, color: colors.text.secondary }}>{fx.lumenOutput}</span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[10px] truncate" style={{ color: "#6b7280" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[10px] truncate" style={{ color: colors.text.tertiary }}>
                       <HighlightText text={fx.spaceType} query={debouncedQuery} />
                     </span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <ScoreBar score={score} />
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <ScoreBarComponent score={score} />
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <StatusBadge status={ev.overallStatus} />
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <StatusBadge status={ev.overallStatus as StatusKey} />
                   </div>
                   <div className="px-1 py-2.5 flex items-center justify-center">
                     <Link href={`/results/${fx.id}`}>
-                      <button className="p-1 transition-colors text-[#9ca3af] hover:text-[#7f1d1d]" title="View Details">
+                      <button className="p-1 transition-colors hover:text-[#7f1d1d]" style={{ color: colors.text.muted }} title="View Details">
                         <ArrowRight size={14} />
                       </button>
                     </Link>
@@ -548,18 +468,10 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div
-        className="flex items-center justify-between px-4 py-2 border border-[#e5dfd0]"
-        style={{ background: "#fdfcf8" }}
-      >
-        <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: "#92800a" }}>
-          Client-side evaluation — dataset &lt; 10K rows
-        </span>
-        <span className="text-[9px]" style={{ ...mono, color: "#a0903a" }}>
-          ASHRAE 90.1 &middot; Title 24 &middot; IES &middot; DLC QPL &middot; IECC
-        </span>
-      </div>
+      <FooterBar
+        left="Client-side evaluation — dataset < 10K rows"
+        right="ASHRAE 90.1 · Title 24 · IES · DLC QPL · IECC"
+      />
     </div>
   )
 }

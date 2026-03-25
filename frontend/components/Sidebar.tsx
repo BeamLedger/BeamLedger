@@ -99,6 +99,12 @@ const NAV_ITEMS = [
       { to: "/activity", label: "Activity Trail", icon: Activity, exact: false },
     ],
   },
+  {
+    section: "SYSTEM",
+    links: [
+      { to: "/settings", label: "Settings", icon: Settings, exact: false },
+    ],
+  },
 ]
 
 export default function Sidebar() {

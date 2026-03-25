@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation"
 import { productTypes, standardsDatabase } from "../../lib/mockData"
 import { Shield, Radio, Zap, Leaf, FileText, ChevronRight, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
-
-const mono = { fontFamily: "'Ubin Sans', monospace" } as const
+import { mono } from "../../lib/designTokens"
 
 const CATEGORY_META: Record<string, { color: string; bg: string; border: string; label: string }> = {
   Safety:        { color: "#2563eb", bg: "#eff6ff", border: "#93c5fd", label: "SAFETY" },

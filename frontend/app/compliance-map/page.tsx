@@ -1,23 +1,19 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import {
-  Map, CheckCircle2, XCircle, AlertCircle, ChevronRight, Zap,
-  BarChart3, Grid3X3, Eye,
-} from "lucide-react"
+import { ChevronRight, Grid3X3, BarChart3 } from "lucide-react"
 import { sampleFixtures } from "../../lib/compliance/sampleData"
 import { evaluateFixture, computeComplianceScore } from "../../lib/compliance/engine"
-import type { ComplianceStatus, Fixture, FixtureEvaluation } from "../../lib/compliance/types"
 import { findLpdAllowance } from "../../lib/compliance/standards"
-
-const mono = { fontFamily: "'Ubin Sans', monospace" } as const
-
-const STATUS_CONFIG: Record<ComplianceStatus, { color: string; bg: string; border: string; label: string }> = {
-  pass:       { color: "#16a34a", bg: "#f0fdf4", border: "#86efac", label: "PASS" },
-  fail:       { color: "#dc2626", bg: "#fef2f2", border: "#fca5a5", label: "FAIL" },
-  exempt:     { color: "#2563eb", bg: "#eff6ff", border: "#93c5fd", label: "EXEMPT" },
-  data_error: { color: "#d97706", bg: "#fffbeb", border: "#fcd34d", label: "DATA ERROR" },
-}
+import { colors, mono, scoreColor } from "../../lib/designTokens"
+import type { StatusKey } from "../../lib/designTokens"
+import type { ComplianceStatus, Fixture, FixtureEvaluation } from "../../lib/compliance/types"
+import PageHeader from "../../components/PageHeader"
+import StatCard from "../../components/StatCard"
+import SectionHeader from "../../components/SectionHeader"
+import FooterBar from "../../components/FooterBar"
+import StatusBadge from "../../components/StatusBadge"
+import ScoreBar from "../../components/ScoreBar"
 
 interface ZoneData {
   spaceType: string
@@ -35,8 +31,8 @@ interface ZoneData {
 export default function ComplianceMapPage() {
   const [selectedZone, setSelectedZone] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<"grid" | "heatmap">("grid")
+  const [expandAll, setExpandAll] = useState(false)
 
-  // Group fixtures by space type (as pseudo-zones) and evaluate
   const zones = useMemo(() => {
     const bySpace: Record<string, ZoneData> = {}
 
@@ -47,16 +43,9 @@ export default function ComplianceMapPage() {
 
       if (!bySpace[key]) {
         bySpace[key] = {
-          spaceType: key,
-          fixtures: [],
-          totalWattage: 0,
-          totalArea: 0,
-          calculatedLpd: null,
-          allowedLpd: null,
-          overallStatus: "pass",
-          passCount: 0,
-          failCount: 0,
-          avgScore: 0,
+          spaceType: key, fixtures: [], totalWattage: 0, totalArea: 0,
+          calculatedLpd: null, allowedLpd: null, overallStatus: "pass",
+          passCount: 0, failCount: 0, avgScore: 0,
         }
       }
 
@@ -65,33 +54,20 @@ export default function ComplianceMapPage() {
       bySpace[key].totalArea = Math.max(bySpace[key].totalArea, fx.spaceArea || 0)
     }
 
-    // Calculate per-zone aggregates
     for (const zone of Object.values(bySpace)) {
-      // LPD
-      if (zone.totalArea > 0) {
-        zone.calculatedLpd = Math.round((zone.totalWattage / zone.totalArea) * 1000) / 1000
-      }
-      // Allowed LPD (check ASHRAE first)
+      if (zone.totalArea > 0) zone.calculatedLpd = Math.round((zone.totalWattage / zone.totalArea) * 1000) / 1000
       const allowance = findLpdAllowance("ASHRAE_90_1_2022", zone.spaceType)
       zone.allowedLpd = allowance ? allowance.allowedLpd : null
-
-      // Status counts
       zone.passCount = zone.fixtures.filter((f) => f.evaluation.overallStatus === "pass").length
       zone.failCount = zone.fixtures.filter((f) => f.evaluation.overallStatus === "fail").length
       zone.avgScore = zone.fixtures.length > 0
         ? Math.round(zone.fixtures.reduce((a, f) => a + f.score, 0) / zone.fixtures.length)
         : 0
 
-      // Overall zone status
-      if (zone.fixtures.some((f) => f.evaluation.overallStatus === "fail")) {
-        zone.overallStatus = "fail"
-      } else if (zone.fixtures.every((f) => f.evaluation.overallStatus === "exempt")) {
-        zone.overallStatus = "exempt"
-      } else if (zone.fixtures.some((f) => f.evaluation.overallStatus === "data_error")) {
-        zone.overallStatus = "data_error"
-      } else {
-        zone.overallStatus = "pass"
-      }
+      if (zone.fixtures.some((f) => f.evaluation.overallStatus === "fail")) zone.overallStatus = "fail"
+      else if (zone.fixtures.every((f) => f.evaluation.overallStatus === "exempt")) zone.overallStatus = "exempt"
+      else if (zone.fixtures.some((f) => f.evaluation.overallStatus === "data_error")) zone.overallStatus = "data_error"
+      else zone.overallStatus = "pass"
     }
 
     return Object.values(bySpace).sort((a, b) => {
@@ -102,127 +78,164 @@ export default function ComplianceMapPage() {
 
   const selectedZoneData = zones.find((z) => z.spaceType === selectedZone)
 
-  // Heatmap color based on score
-  function heatColor(score: number): string {
-    if (score >= 80) return "#16a34a"
-    if (score >= 60) return "#65a30d"
-    if (score >= 40) return "#d97706"
-    if (score >= 20) return "#ea580c"
-    return "#dc2626"
-  }
-
   return (
-    <div className="flex-1 overflow-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between border-b border-[#e5e7eb] pb-4">
-        <div>
-          <p className="text-[10px] tracking-[0.2em] uppercase mb-1" style={{ ...mono, color: "#6b7280" }}>
-            Module: Spatial Compliance
-          </p>
-          <h1 className="tracking-tight" style={{ fontSize: "20px", fontWeight: 600, color: "#1f2937" }}>
-            Compliance Map
-          </h1>
-          <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
-            Site-wide compliance posture at a glance — zone-level LPD aggregation with color-coded status
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            className="flex items-center gap-2 px-3 py-2 text-[10px] tracking-widest uppercase border"
-            style={{
-              ...mono,
-              background: viewMode === "grid" ? "rgba(127,29,29,0.08)" : "#f9fafb",
-              borderColor: viewMode === "grid" ? "#991b1b" : "#e5e7eb",
-              color: viewMode === "grid" ? "#7f1d1d" : "#6b7280",
-            }}
-            onClick={() => setViewMode("grid")}
-          >
-            <Grid3X3 size={11} /> Grid
-          </button>
-          <button
-            className="flex items-center gap-2 px-3 py-2 text-[10px] tracking-widest uppercase border"
-            style={{
-              ...mono,
-              background: viewMode === "heatmap" ? "rgba(127,29,29,0.08)" : "#f9fafb",
-              borderColor: viewMode === "heatmap" ? "#991b1b" : "#e5e7eb",
-              color: viewMode === "heatmap" ? "#7f1d1d" : "#6b7280",
-            }}
-            onClick={() => setViewMode("heatmap")}
-          >
-            <BarChart3 size={11} /> Heatmap
-          </button>
-        </div>
-      </div>
+    <div className="flex-1 overflow-auto p-6 space-y-5">
+      <PageHeader
+        module="Spatial Compliance"
+        title="Compliance Map"
+        subtitle="Site-wide compliance posture at a glance — zone-level LPD aggregation with color-coded status"
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              className="flex items-center gap-2 px-3 py-2 text-[10px] tracking-widest uppercase border"
+              style={{
+                ...mono,
+                background: viewMode === "grid" ? colors.maroon[100] : colors.bg.panel,
+                borderColor: viewMode === "grid" ? colors.maroon[700] : colors.border.default,
+                color: viewMode === "grid" ? colors.maroon[800] : colors.text.tertiary,
+              }}
+              onClick={() => setViewMode("grid")}
+            >
+              <Grid3X3 size={11} /> Grid
+            </button>
+            <button
+              className="flex items-center gap-2 px-3 py-2 text-[10px] tracking-widest uppercase border"
+              style={{
+                ...mono,
+                background: viewMode === "heatmap" ? colors.maroon[100] : colors.bg.panel,
+                borderColor: viewMode === "heatmap" ? colors.maroon[700] : colors.border.default,
+                color: viewMode === "heatmap" ? colors.maroon[800] : colors.text.tertiary,
+              }}
+              onClick={() => setViewMode("heatmap")}
+            >
+              <BarChart3 size={11} /> Heatmap
+            </button>
+            <button
+              className="px-3 py-2 text-[10px] tracking-widest uppercase border"
+              style={{
+                ...mono,
+                background: expandAll ? colors.maroon[100] : colors.bg.panel,
+                borderColor: expandAll ? colors.maroon[700] : colors.border.default,
+                color: expandAll ? colors.maroon[800] : colors.text.tertiary,
+              }}
+              onClick={() => { setExpandAll(!expandAll); setSelectedZone(null) }}
+            >
+              {expandAll ? "Collapse All" : "Expand All"}
+            </button>
+          </div>
+        }
+      />
 
       {/* Summary strip */}
-      <div className="grid grid-cols-4 border border-[#e5e7eb]" style={{ background: "#f9fafb" }}>
-        {[
-          { label: "ZONES", value: zones.length, color: "#6b7280" },
-          { label: "COMPLIANT", value: zones.filter((z) => z.overallStatus === "pass").length, color: "#16a34a" },
-          { label: "NON-COMPLIANT", value: zones.filter((z) => z.overallStatus === "fail").length, color: "#dc2626" },
-          { label: "AVG SCORE", value: `${zones.length > 0 ? Math.round(zones.reduce((a, z) => a + z.avgScore, 0) / zones.length) : 0}%`, color: "#2563eb" },
-        ].map((s) => (
-          <div key={s.label} className="px-4 py-3 border-r border-[#e5e7eb] last:border-r-0">
-            <div className="text-[9px] tracking-widest uppercase mb-1" style={{ ...mono, color: "#9ca3af" }}>{s.label}</div>
-            <div style={{ fontSize: "22px", fontWeight: 700, color: s.color, ...mono }}>{s.value}</div>
+      <div className="grid grid-cols-4 border" style={{ borderColor: colors.border.default, background: colors.bg.panel }}>
+        <StatCard label="Zones" value={zones.length} color={colors.text.tertiary} />
+        <StatCard label="Compliant" value={zones.filter((z) => z.overallStatus === "pass").length} color={colors.pass.fg} />
+        <StatCard label="Non-Compliant" value={zones.filter((z) => z.overallStatus === "fail").length} color={colors.fail.fg} />
+        <StatCard label="Avg Score" value={`${zones.length > 0 ? Math.round(zones.reduce((a, z) => a + z.avgScore, 0) / zones.length) : 0}%`} color={colors.exempt.fg} />
+      </div>
+
+      {/* Zone summary table */}
+      <div>
+        <SectionHeader title="Zone Summary" right={`${zones.length} zones`} />
+        <div className="border border-t-0" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
+          <div className="grid border-b" style={{ gridTemplateColumns: "1fr 80px 80px 100px 100px 100px", background: colors.bg.panel, borderColor: colors.border.default }}>
+            {["ZONE / SPACE TYPE", "FIXTURES", "AVG SCORE", "CALC. LPD", "ALLOWED LPD", "STATUS"].map((h) => (
+              <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
+            ))}
           </div>
-        ))}
+          {zones.map((zone, idx) => (
+            <div key={zone.spaceType} className="grid border-b cursor-pointer transition-colors hover:!bg-[#f5f5fa]"
+              style={{ gridTemplateColumns: "1fr 80px 80px 100px 100px 100px", background: idx % 2 === 0 ? colors.bg.page : colors.bg.alt, borderColor: colors.border.light }}
+              onClick={() => setSelectedZone(selectedZone === zone.spaceType ? null : zone.spaceType)}
+            >
+              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                <span className="text-[11px] truncate" style={{ fontWeight: 500, color: colors.text.primary }}>{zone.spaceType}</span>
+              </div>
+              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                <span className="text-[11px]" style={{ ...mono, color: colors.text.secondary }}>{zone.fixtures.length}</span>
+              </div>
+              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                <ScoreBar score={zone.avgScore} />
+              </div>
+              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                <span className="text-[10px]" style={{
+                  ...mono,
+                  color: zone.calculatedLpd !== null && zone.allowedLpd !== null && zone.calculatedLpd > zone.allowedLpd ? colors.fail.fg : colors.text.secondary,
+                }}>
+                  {zone.calculatedLpd !== null ? `${zone.calculatedLpd.toFixed(3)} W/ft²` : "—"}
+                </span>
+              </div>
+              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                <span className="text-[10px]" style={{ ...mono, color: colors.text.tertiary }}>
+                  {zone.allowedLpd !== null ? `${zone.allowedLpd.toFixed(2)} W/ft²` : "—"}
+                </span>
+              </div>
+              <div className="px-3 py-2.5 flex items-center overflow-hidden">
+                <StatusBadge status={zone.overallStatus as StatusKey} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Zone cards / heatmap */}
       {viewMode === "grid" ? (
         <div className="grid grid-cols-3 gap-4">
           {zones.map((zone) => {
-            const cfg = STATUS_CONFIG[zone.overallStatus]
-            const isSelected = selectedZone === zone.spaceType
+            const isSelected = selectedZone === zone.spaceType || expandAll
+            const statusCfg = { pass: colors.pass, fail: colors.fail, exempt: colors.exempt, data_error: colors.dataError }[zone.overallStatus]
             return (
               <div
                 key={zone.spaceType}
                 className="border cursor-pointer transition-all"
                 style={{
-                  borderColor: isSelected ? cfg.color : "#e5e7eb",
+                  borderColor: isSelected ? statusCfg.fg : colors.border.default,
                   borderWidth: isSelected ? "2px" : "1px",
-                  background: isSelected ? cfg.bg : "#ffffff",
+                  background: isSelected ? statusCfg.bg : colors.bg.page,
                 }}
-                onClick={() => setSelectedZone(isSelected ? null : zone.spaceType)}
+                onClick={() => setSelectedZone(isSelected && !expandAll ? null : zone.spaceType)}
               >
-                <div className="px-4 py-3 border-b" style={{ borderColor: isSelected ? cfg.border : "#f0f0f2", background: "#f9fafb" }}>
+                <div className="px-4 py-3 border-b" style={{ borderColor: isSelected ? statusCfg.border : colors.border.light, background: colors.bg.panel }}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[12px]" style={{ fontWeight: 600, color: "#1f2937" }}>{zone.spaceType}</span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[8px] tracking-wider uppercase border whitespace-nowrap"
-                      style={{ ...mono, color: cfg.color, background: cfg.bg, borderColor: cfg.border }}>
-                      {cfg.label}
-                    </span>
+                    <span className="text-[12px]" style={{ fontWeight: 600, color: colors.text.primary }}>{zone.spaceType}</span>
+                    <StatusBadge status={zone.overallStatus as StatusKey} />
                   </div>
                 </div>
                 <div className="px-4 py-3 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: "#9ca3af" }}>FIXTURES</div>
-                      <div className="text-[14px]" style={{ ...mono, fontWeight: 600, color: "#1f2937" }}>{zone.fixtures.length}</div>
+                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: colors.text.muted }}>FIXTURES</div>
+                      <div className="text-[14px]" style={{ ...mono, fontWeight: 600, color: colors.text.primary }}>{zone.fixtures.length}</div>
                     </div>
                     <div>
-                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: "#9ca3af" }}>AVG SCORE</div>
-                      <div className="text-[14px]" style={{ ...mono, fontWeight: 600, color: heatColor(zone.avgScore) }}>{zone.avgScore}%</div>
+                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: colors.text.muted }}>AVG SCORE</div>
+                      <div className="text-[14px]" style={{ ...mono, fontWeight: 600, color: scoreColor(zone.avgScore) }}>{zone.avgScore}%</div>
                     </div>
+                  </div>
+                  {/* Mini progress bar */}
+                  <div className="w-full h-1.5" style={{ background: colors.border.default }}>
+                    <div className="h-full transition-all" style={{ width: `${zone.avgScore}%`, background: scoreColor(zone.avgScore) }} />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: "#9ca3af" }}>TOTAL LPD</div>
-                      <div className="text-[12px]" style={{ ...mono, color: zone.calculatedLpd !== null && zone.allowedLpd !== null && zone.calculatedLpd > zone.allowedLpd ? "#dc2626" : "#1f2937" }}>
+                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: colors.text.muted }}>TOTAL LPD</div>
+                      <div className="text-[12px]" style={{
+                        ...mono,
+                        color: zone.calculatedLpd !== null && zone.allowedLpd !== null && zone.calculatedLpd > zone.allowedLpd ? colors.fail.fg : colors.text.primary,
+                      }}>
                         {zone.calculatedLpd !== null ? `${zone.calculatedLpd.toFixed(3)} W/ft²` : "—"}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: "#9ca3af" }}>ALLOWED</div>
-                      <div className="text-[12px]" style={{ ...mono, color: "#6b7280" }}>
+                      <div className="text-[8px] tracking-widest uppercase" style={{ ...mono, color: colors.text.muted }}>ALLOWED</div>
+                      <div className="text-[12px]" style={{ ...mono, color: colors.text.tertiary }}>
                         {zone.allowedLpd !== null ? `${zone.allowedLpd.toFixed(2)} W/ft²` : "—"}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[9px]" style={{ color: "#16a34a" }}>{zone.passCount} pass</span>
-                    <span className="text-[9px]" style={{ color: "#dc2626" }}>{zone.failCount} fail</span>
+                    <span className="text-[9px]" style={{ color: colors.pass.fg }}>{zone.passCount} pass</span>
+                    <span className="text-[9px]" style={{ color: colors.fail.fg }}>{zone.failCount} fail</span>
                   </div>
                 </div>
               </div>
@@ -230,10 +243,9 @@ export default function ComplianceMapPage() {
           })}
         </div>
       ) : (
-        /* Heatmap view */
-        <div className="border border-[#e5e7eb]" style={{ background: "#ffffff" }}>
-          <div className="px-4 py-2 border-b border-[#e5e7eb]" style={{ background: "#f9fafb" }}>
-            <span className="text-[10px] tracking-widest uppercase" style={{ ...mono, color: "#6b7280" }}>
+        <div className="border" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
+          <div className="px-4 py-2 border-b" style={{ borderColor: colors.border.default, background: colors.bg.panel }}>
+            <span className="text-[10px] tracking-widest uppercase" style={{ ...mono, color: colors.text.tertiary }}>
               Compliance Heatmap — Score by Zone
             </span>
           </div>
@@ -244,42 +256,38 @@ export default function ComplianceMapPage() {
                   key={zone.spaceType}
                   className="cursor-pointer transition-all border p-3"
                   style={{
-                    background: `${heatColor(zone.avgScore)}15`,
-                    borderColor: selectedZone === zone.spaceType ? heatColor(zone.avgScore) : `${heatColor(zone.avgScore)}40`,
+                    background: `${scoreColor(zone.avgScore)}15`,
+                    borderColor: selectedZone === zone.spaceType ? scoreColor(zone.avgScore) : `${scoreColor(zone.avgScore)}40`,
                     borderWidth: selectedZone === zone.spaceType ? "2px" : "1px",
                   }}
                   onClick={() => setSelectedZone(selectedZone === zone.spaceType ? null : zone.spaceType)}
                 >
-                  <div className="text-[11px] truncate" style={{ fontWeight: 500, color: "#1f2937" }}>{zone.spaceType}</div>
+                  <div className="text-[11px] truncate" style={{ fontWeight: 500, color: colors.text.primary }}>{zone.spaceType}</div>
                   <div className="mt-2 flex items-end justify-between">
-                    <div style={{ fontSize: "28px", fontWeight: 700, color: heatColor(zone.avgScore), ...mono }}>
-                      {zone.avgScore}%
-                    </div>
+                    <div style={{ fontSize: "28px", fontWeight: 700, color: scoreColor(zone.avgScore), ...mono }}>{zone.avgScore}%</div>
                     <div className="text-right">
-                      <div className="text-[9px]" style={{ ...mono, color: "#6b7280" }}>{zone.fixtures.length} fixtures</div>
-                      <div className="text-[9px]" style={{ ...mono, color: "#6b7280" }}>{zone.totalWattage}W total</div>
+                      <div className="text-[9px]" style={{ ...mono, color: colors.text.tertiary }}>{zone.fixtures.length} fixtures</div>
+                      <div className="text-[9px]" style={{ ...mono, color: colors.text.tertiary }}>{zone.totalWattage}W total</div>
                     </div>
                   </div>
-                  {/* Mini bar */}
-                  <div className="mt-2 h-1.5 w-full" style={{ background: "#e5e7eb" }}>
-                    <div className="h-full" style={{ width: `${zone.avgScore}%`, background: heatColor(zone.avgScore) }} />
+                  <div className="mt-2 h-1.5 w-full" style={{ background: colors.border.default }}>
+                    <div className="h-full" style={{ width: `${zone.avgScore}%`, background: scoreColor(zone.avgScore) }} />
                   </div>
                 </div>
               ))}
             </div>
-            {/* Legend */}
-            <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[#e5e7eb]">
-              <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: "#9ca3af" }}>LEGEND:</span>
+            <div className="flex items-center gap-4 mt-4 pt-3 border-t" style={{ borderColor: colors.border.default }}>
+              <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: colors.text.muted }}>LEGEND:</span>
               {[
-                { label: "0-20%", color: "#dc2626" },
-                { label: "20-40%", color: "#ea580c" },
-                { label: "40-60%", color: "#d97706" },
-                { label: "60-80%", color: "#65a30d" },
-                { label: "80-100%", color: "#16a34a" },
+                { label: "0-20%", color: colors.chart.red },
+                { label: "20-40%", color: colors.chart.orange },
+                { label: "40-60%", color: colors.chart.amber },
+                { label: "60-80%", color: colors.chart.lime },
+                { label: "80-100%", color: colors.chart.green },
               ].map((l) => (
                 <div key={l.label} className="flex items-center gap-1">
                   <div className="w-3 h-3" style={{ background: l.color }} />
-                  <span className="text-[9px]" style={{ ...mono, color: "#6b7280" }}>{l.label}</span>
+                  <span className="text-[9px]" style={{ ...mono, color: colors.text.tertiary }}>{l.label}</span>
                 </div>
               ))}
             </div>
@@ -290,57 +298,40 @@ export default function ComplianceMapPage() {
       {/* Expanded zone detail */}
       {selectedZoneData && (
         <div>
-          <div className="flex items-center gap-3 px-4 py-2.5 border border-b-0 border-[#e5e7eb]" style={{ background: "#f9fafb" }}>
-            <span className="text-[10px] tracking-widest uppercase" style={{ ...mono, color: "#6b7280" }}>
-              Zone Detail: {selectedZoneData.spaceType}
-            </span>
-            <ChevronRight size={10} color="#9ca3af" />
-            <span className="text-[10px]" style={{ ...mono, color: "#9ca3af" }}>
-              {selectedZoneData.fixtures.length} fixtures
-            </span>
-          </div>
-          <div className="border border-[#e5e7eb]" style={{ background: "#ffffff" }}>
-            {/* Zone detail header */}
-            <div className="grid border-b border-[#e5e7eb]"
-              style={{ gridTemplateColumns: "1fr 90px 90px 80px 100px 100px", background: "#f9fafb" }}>
+          <SectionHeader title={`Zone Detail: ${selectedZoneData.spaceType}`} right={`${selectedZoneData.fixtures.length} fixtures`} />
+          <div className="border border-t-0" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
+            <div className="grid border-b" style={{ gridTemplateColumns: "1fr 90px 90px 80px 100px 100px", background: colors.bg.panel, borderColor: colors.border.default }}>
               {["FIXTURE", "WATTAGE", "LUMENS", "SCORE", "LPD", "STATUS"].map((h) => (
-                <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden"
-                  style={{ ...mono, color: "#6b7280", borderRight: "1px solid #f0f0f2" }}>{h}</div>
+                <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
               ))}
             </div>
             {selectedZoneData.fixtures.map((item, idx) => {
               const fx = item.fixture
               const ev = item.evaluation
-              const cfg = STATUS_CONFIG[ev.overallStatus]
-              const lpdVal = fx.spaceArea && fx.spaceArea > 0
-                ? ((fx.wattage || 0) * (fx.quantity || 1)) / fx.spaceArea
-                : null
+              const lpdVal = fx.spaceArea && fx.spaceArea > 0 ? ((fx.wattage || 0) * (fx.quantity || 1)) / fx.spaceArea : null
               return (
-                <div key={fx.id} className="grid border-b border-[#f0f0f2] min-w-0"
-                  style={{ gridTemplateColumns: "1fr 90px 90px 80px 100px 100px", background: idx % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-                  <div className="px-3 py-2.5 overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <div className="text-[11px] truncate" style={{ fontWeight: 500, color: "#1f2937" }}>{fx.fixtureName}</div>
-                    <div className="text-[9px] truncate" style={{ color: "#9ca3af" }}>{fx.fixtureType} &middot; Qty {fx.quantity}</div>
+                <div key={fx.id} className="grid border-b min-w-0"
+                  style={{ gridTemplateColumns: "1fr 90px 90px 80px 100px 100px", background: idx % 2 === 0 ? colors.bg.page : colors.bg.alt, borderColor: colors.border.light }}>
+                  <div className="px-3 py-2.5 overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <div className="text-[11px] truncate" style={{ fontWeight: 500, color: colors.text.primary }}>{fx.fixtureName}</div>
+                    <div className="text-[9px] truncate" style={{ color: colors.text.muted }}>{fx.fixtureType} &middot; Qty {fx.quantity}</div>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[10px]" style={{ ...mono, color: "#4b5563" }}>{fx.wattage}W</span>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[10px]" style={{ ...mono, color: colors.text.secondary }}>{fx.wattage}W</span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[10px]" style={{ ...mono, color: "#4b5563" }}>{fx.lumenOutput} lm</span>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[10px]" style={{ ...mono, color: colors.text.secondary }}>{fx.lumenOutput} lm</span>
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[10px]" style={{ ...mono, fontWeight: 600, color: heatColor(item.score) }}>{item.score}%</span>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <ScoreBar score={item.score} />
                   </div>
-                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                    <span className="text-[10px]" style={{ ...mono, color: "#6b7280" }}>
+                  <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                    <span className="text-[10px]" style={{ ...mono, color: colors.text.tertiary }}>
                       {lpdVal !== null ? `${lpdVal.toFixed(3)} W/ft²` : "—"}
                     </span>
                   </div>
                   <div className="px-3 py-2.5 flex items-center overflow-hidden">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[8px] tracking-wider uppercase border whitespace-nowrap"
-                      style={{ ...mono, color: cfg.color, background: cfg.bg, borderColor: cfg.border }}>
-                      {cfg.label}
-                    </span>
+                    <StatusBadge status={ev.overallStatus as StatusKey} />
                   </div>
                 </div>
               )
@@ -349,15 +340,10 @@ export default function ComplianceMapPage() {
         </div>
       )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-2 border border-[#e5dfd0]" style={{ background: "#fdfcf8" }}>
-        <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: "#92800a" }}>
-          Zone-level LPD = sum(fixture wattage &times; qty) / zone area
-        </span>
-        <span className="text-[9px]" style={{ ...mono, color: "#a0903a" }}>
-          LPD allowances per ASHRAE 90.1-2022 Table 9.6.1
-        </span>
-      </div>
+      <FooterBar
+        left="Zone-level LPD = sum(fixture wattage x qty) / zone area"
+        right="LPD allowances per ASHRAE 90.1-2022 Table 9.6.1"
+      />
     </div>
   )
 }

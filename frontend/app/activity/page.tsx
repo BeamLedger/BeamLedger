@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react"
 import {
-  Activity, Upload, CheckCircle2, XCircle, AlertCircle, FileText,
-  MessageSquare, Clock, Download, Filter, Settings, Edit3,
+  Activity, Upload, CheckCircle2, XCircle, FileText,
+  MessageSquare, Download, Edit3, Radio,
 } from "lucide-react"
-
-const mono = { fontFamily: "'Ubin Sans', monospace" } as const
+import { colors, mono } from "../../lib/designTokens"
+import PageHeader from "../../components/PageHeader"
+import SectionHeader from "../../components/SectionHeader"
+import FooterBar from "../../components/FooterBar"
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,7 +20,6 @@ interface ActivityEntry {
   entityType: string
   entityId: string
   summary: string
-  details?: string
 }
 
 interface FixtureComment {
@@ -41,7 +42,7 @@ interface FieldChange {
   newValue: string
 }
 
-// ── Mock Data (client-side demo — replaced by API in production) ────────────
+// ── Mock Data ──────────────────────────────────────────────────────────────
 
 const DEMO_ACTIVITIES: ActivityEntry[] = [
   { id: 1, timestamp: "2026-03-24T14:30:00Z", user: "admin@beamledger.com", action: "compliance_evaluated", entityType: "fixture", entityId: "FX-001", summary: "Compliance evaluation completed for FX-001 (Horizon LED Troffer) — PASS" },
@@ -74,26 +75,26 @@ const DEMO_CHANGES: FieldChange[] = [
 
 function getActionIcon(action: string) {
   switch (action) {
-    case "fixture_added": return <CheckCircle2 size={12} color="#16a34a" />
-    case "fixture_updated": return <Edit3 size={12} color="#2563eb" />
-    case "fixture_deleted": return <XCircle size={12} color="#dc2626" />
-    case "compliance_evaluated": return <AlertCircle size={12} color="#d97706" />
-    case "report_generated": return <FileText size={12} color="#7c3aed" />
+    case "fixture_added": return <CheckCircle2 size={12} color={colors.pass.fg} />
+    case "fixture_updated": return <Edit3 size={12} color={colors.exempt.fg} />
+    case "fixture_deleted": return <XCircle size={12} color={colors.fail.fg} />
+    case "compliance_evaluated": return <Activity size={12} color={colors.dataError.fg} />
+    case "report_generated": return <FileText size={12} color={colors.chart.purple} />
     case "import_completed": return <Upload size={12} color="#059669" />
-    case "comment_added": return <MessageSquare size={12} color="#6366f1" />
-    default: return <Activity size={12} color="#6b7280" />
+    case "comment_added": return <MessageSquare size={12} color={colors.info.fg} />
+    default: return <Activity size={12} color={colors.text.tertiary} />
   }
 }
 
 function getActionColor(action: string): string {
   switch (action) {
-    case "fixture_added": return "#16a34a"
-    case "fixture_updated": return "#2563eb"
-    case "compliance_evaluated": return "#d97706"
-    case "report_generated": return "#7c3aed"
+    case "fixture_added": return colors.pass.fg
+    case "fixture_updated": return colors.exempt.fg
+    case "compliance_evaluated": return colors.dataError.fg
+    case "report_generated": return colors.chart.purple
     case "import_completed": return "#059669"
-    case "comment_added": return "#6366f1"
-    default: return "#6b7280"
+    case "comment_added": return colors.info.fg
+    default: return colors.text.tertiary
   }
 }
 
@@ -107,69 +108,75 @@ function timeAgo(iso: string): string {
   return `${days}d ago`
 }
 
+function exportCSV() {
+  const rows = DEMO_ACTIVITIES.map((a) => [a.timestamp, a.user, a.action, a.entityType, a.entityId, `"${a.summary}"`].join(","))
+  const csv = ["Timestamp,User,Action,Entity Type,Entity ID,Summary", ...rows].join("\n")
+  const blob = new Blob([csv], { type: "text/csv" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url; a.download = "audit_trail.csv"; a.click()
+  URL.revokeObjectURL(url)
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function ActivityPage() {
   const [tab, setTab] = useState<"feed" | "comments" | "changes">("feed")
   const [actionFilter, setActionFilter] = useState<string>("")
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 8
 
   const filteredActivities = useMemo(() => {
     if (!actionFilter) return DEMO_ACTIVITIES
     return DEMO_ACTIVITIES.filter((a) => a.action === actionFilter)
   }, [actionFilter])
 
+  const pagedActivities = filteredActivities.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const totalPages = Math.ceil(filteredActivities.length / PAGE_SIZE)
+
   return (
-    <div className="flex-1 overflow-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between border-b border-[#e5e7eb] pb-4">
-        <div>
-          <p className="text-[10px] tracking-[0.2em] uppercase mb-1" style={{ ...mono, color: "#6b7280" }}>
-            Module: Audit &amp; Collaboration
-          </p>
-          <h1 className="tracking-tight" style={{ fontSize: "20px", fontWeight: 600, color: "#1f2937" }}>
-            Activity &amp; Audit Trail
-          </h1>
-          <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
-            Every action logged — fixtures, evaluations, imports, comments, and field changes
-          </p>
-        </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 text-[10px] tracking-widest uppercase border transition-colors hover:opacity-90"
-          style={{ ...mono, background: "#f9fafb", borderColor: "#e5e7eb", color: "#6b7280" }}
-          onClick={() => {
-            // Generate CSV export
-            const rows = DEMO_ACTIVITIES.map((a) => [a.timestamp, a.user, a.action, a.entityType, a.entityId, a.summary].join(","))
-            const csv = ["Timestamp,User,Action,Entity Type,Entity ID,Summary", ...rows].join("\n")
-            const blob = new Blob([csv], { type: "text/csv" })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement("a")
-            a.href = url; a.download = "audit_trail.csv"; a.click()
-            URL.revokeObjectURL(url)
-          }}
-        >
-          <Download size={12} /> Export CSV
-        </button>
-      </div>
+    <div className="flex-1 overflow-auto p-6 space-y-5">
+      <PageHeader
+        module="Audit & Collaboration"
+        title="Activity & Audit Trail"
+        subtitle="Every action logged — fixtures, evaluations, imports, comments, and field changes"
+        actions={
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-2 border" style={{ borderColor: colors.pass.border, background: colors.pass.bg }}>
+              <Radio size={10} style={{ color: colors.pass.fg }} />
+              <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: colors.pass.fg }}>Live</span>
+            </div>
+            <button
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-4 py-2 text-[10px] tracking-widest uppercase border transition-colors hover:opacity-90"
+              style={{ ...mono, background: colors.bg.panel, borderColor: colors.border.default, color: colors.text.tertiary }}
+            >
+              <Download size={12} /> Export CSV
+            </button>
+          </div>
+        }
+      />
 
       {/* Tabs */}
-      <div className="flex border-b border-[#e5e7eb]">
+      <div className="flex border-b" style={{ borderColor: colors.border.default }}>
         {[
-          { key: "feed" as const, label: "Activity Feed", icon: <Activity size={11} /> },
-          { key: "comments" as const, label: "Comments", icon: <MessageSquare size={11} /> },
-          { key: "changes" as const, label: "Change History", icon: <Edit3 size={11} /> },
+          { key: "feed" as const, label: "Activity Feed", icon: <Activity size={11} />, count: DEMO_ACTIVITIES.length },
+          { key: "comments" as const, label: "Comments", icon: <MessageSquare size={11} />, count: DEMO_COMMENTS.length },
+          { key: "changes" as const, label: "Change History", icon: <Edit3 size={11} />, count: DEMO_CHANGES.length },
         ].map((t) => (
           <button
             key={t.key}
             className="flex items-center gap-2 px-5 py-2.5 text-[10px] tracking-widest uppercase border-b-2 transition-colors"
             style={{
               ...mono,
-              borderBottomColor: tab === t.key ? "#991b1b" : "transparent",
-              color: tab === t.key ? "#7f1d1d" : "#6b7280",
+              borderBottomColor: tab === t.key ? colors.maroon[700] : "transparent",
+              color: tab === t.key ? colors.maroon[800] : colors.text.tertiary,
               fontWeight: tab === t.key ? 600 : 400,
             }}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setPage(0) }}
           >
             {t.icon} {t.label}
+            <span className="text-[8px] px-1 py-0.5 border" style={{ borderColor: colors.border.default, color: colors.text.muted }}>{t.count}</span>
           </button>
         ))}
       </div>
@@ -177,36 +184,34 @@ export default function ActivityPage() {
       {/* Activity Feed */}
       {tab === "feed" && (
         <div>
-          {/* Filter */}
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: "#9ca3af" }}>FILTER:</span>
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: colors.text.muted }}>FILTER:</span>
             {["", "fixture_added", "fixture_updated", "compliance_evaluated", "import_completed", "report_generated", "comment_added"].map((f) => (
               <button
                 key={f}
                 className="px-2 py-1 text-[9px] tracking-wider uppercase border"
                 style={{
                   ...mono,
-                  background: actionFilter === f ? "rgba(127,29,29,0.08)" : "#f9fafb",
-                  borderColor: actionFilter === f ? "#991b1b" : "#e5e7eb",
-                  color: actionFilter === f ? "#7f1d1d" : "#6b7280",
+                  background: actionFilter === f ? colors.maroon[100] : colors.bg.panel,
+                  borderColor: actionFilter === f ? colors.maroon[700] : colors.border.default,
+                  color: actionFilter === f ? colors.maroon[800] : colors.text.tertiary,
                 }}
-                onClick={() => setActionFilter(f)}
+                onClick={() => { setActionFilter(f); setPage(0) }}
               >
                 {f ? f.replace(/_/g, " ") : "ALL"}
               </button>
             ))}
           </div>
 
-          {/* Timeline */}
-          <div className="border border-[#e5e7eb]" style={{ background: "#ffffff" }}>
-            {filteredActivities.map((entry, idx) => (
+          <div className="border" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
+            {pagedActivities.map((entry, idx) => (
               <div
                 key={entry.id}
-                className="flex gap-4 px-5 py-4 border-b border-[#f0f0f2] last:border-b-0"
-                style={{ background: idx % 2 === 0 ? "#ffffff" : "#fafafa" }}
+                className="flex gap-4 px-5 py-4 border-b last:border-b-0"
+                style={{ background: idx % 2 === 0 ? colors.bg.page : colors.bg.alt, borderColor: colors.border.light }}
               >
                 <div className="flex-shrink-0 mt-0.5">
-                  <div className="w-7 h-7 flex items-center justify-center border" style={{ borderColor: "#e5e7eb", background: "#f9fafb" }}>
+                  <div className="w-7 h-7 flex items-center justify-center border" style={{ borderColor: colors.border.default, background: colors.bg.panel }}>
                     {getActionIcon(entry.action)}
                   </div>
                 </div>
@@ -216,13 +221,13 @@ export default function ActivityPage() {
                       style={{ ...mono, color: getActionColor(entry.action), borderColor: `${getActionColor(entry.action)}40`, background: `${getActionColor(entry.action)}08` }}>
                       {entry.action.replace(/_/g, " ")}
                     </span>
-                    <span className="text-[10px]" style={{ color: "#9ca3af" }}>&middot;</span>
-                    <span className="text-[10px]" style={{ ...mono, color: "#9ca3af" }}>{timeAgo(entry.timestamp)}</span>
+                    <span className="text-[10px]" style={{ color: colors.text.muted }}>&middot;</span>
+                    <span className="text-[10px]" style={{ ...mono, color: colors.text.muted }}>{timeAgo(entry.timestamp)}</span>
                   </div>
-                  <p className="text-[12px]" style={{ color: "#1f2937" }}>{entry.summary}</p>
+                  <p className="text-[12px]" style={{ color: colors.text.primary }}>{entry.summary}</p>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[10px]" style={{ color: "#9ca3af" }}>{entry.user}</span>
-                    <span className="text-[10px]" style={{ ...mono, color: "#d1d5db" }}>
+                    <span className="text-[10px]" style={{ color: colors.text.muted }}>{entry.user}</span>
+                    <span className="text-[10px]" style={{ ...mono, color: colors.text.faint }}>
                       {new Date(entry.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
@@ -230,32 +235,59 @@ export default function ActivityPage() {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-[10px]" style={{ ...mono, color: colors.text.muted }}>
+                Page {page + 1} of {totalPages} &middot; {filteredActivities.length} entries
+              </span>
+              <div className="flex gap-2">
+                <button
+                  className="px-3 py-1 text-[10px] tracking-widest uppercase border"
+                  style={{ ...mono, borderColor: colors.border.default, color: page === 0 ? colors.text.faint : colors.text.tertiary, cursor: page === 0 ? "not-allowed" : "pointer" }}
+                  disabled={page === 0}
+                  onClick={() => setPage(page - 1)}
+                >
+                  Prev
+                </button>
+                <button
+                  className="px-3 py-1 text-[10px] tracking-widest uppercase border"
+                  style={{ ...mono, borderColor: colors.border.default, color: page >= totalPages - 1 ? colors.text.faint : colors.text.tertiary, cursor: page >= totalPages - 1 ? "not-allowed" : "pointer" }}
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Comments */}
       {tab === "comments" && (
-        <div className="border border-[#e5e7eb]" style={{ background: "#ffffff" }}>
+        <div className="border" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
           {DEMO_COMMENTS.map((c, idx) => (
             <div
               key={c.id}
-              className="flex gap-4 px-5 py-4 border-b border-[#f0f0f2] last:border-b-0"
-              style={{ background: idx % 2 === 0 ? "#ffffff" : "#fafafa" }}
+              className="flex gap-4 px-5 py-4 border-b last:border-b-0"
+              style={{ background: idx % 2 === 0 ? colors.bg.page : colors.bg.alt, borderColor: colors.border.light }}
             >
               <div className="flex-shrink-0 mt-0.5">
                 <div className="w-7 h-7 flex items-center justify-center border" style={{ borderColor: "#c4b5fd", background: "#f5f3ff" }}>
-                  <MessageSquare size={12} color="#6366f1" />
+                  <MessageSquare size={12} color={colors.info.fg} />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[11px]" style={{ fontWeight: 500, color: "#1f2937" }}>{c.fixtureName}</span>
-                  <span className="text-[9px]" style={{ ...mono, color: "#9ca3af" }}>{c.fixtureId}</span>
+                  <span className="text-[11px]" style={{ fontWeight: 500, color: colors.text.primary }}>{c.fixtureName}</span>
+                  <span className="text-[9px]" style={{ ...mono, color: colors.text.muted }}>{c.fixtureId}</span>
                 </div>
-                <p className="text-[12px] mb-1" style={{ color: "#4b5563" }}>"{c.content}"</p>
+                <p className="text-[12px] mb-1" style={{ color: colors.text.secondary }}>"{c.content}"</p>
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px]" style={{ color: "#9ca3af" }}>{c.user}</span>
-                  <span className="text-[10px]" style={{ ...mono, color: "#d1d5db" }}>{timeAgo(c.timestamp)}</span>
+                  <span className="text-[10px]" style={{ color: colors.text.muted }}>{c.user}</span>
+                  <span className="text-[10px]" style={{ ...mono, color: colors.text.faint }}>{timeAgo(c.timestamp)}</span>
                 </div>
               </div>
             </div>
@@ -265,47 +297,43 @@ export default function ActivityPage() {
 
       {/* Change History */}
       {tab === "changes" && (
-        <div className="border border-[#e5e7eb]" style={{ background: "#ffffff" }}>
-          <div className="grid border-b border-[#e5e7eb]"
-            style={{ gridTemplateColumns: "1fr 120px 120px 120px 100px", background: "#f9fafb" }}>
-            {["FIXTURE", "FIELD", "OLD VALUE", "NEW VALUE", "WHEN"].map((h) => (
-              <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden"
-                style={{ ...mono, color: "#6b7280", borderRight: "1px solid #f0f0f2" }}>{h}</div>
+        <div>
+          <SectionHeader title="Field Changes" right={`${DEMO_CHANGES.length} changes`} />
+          <div className="border border-t-0" style={{ borderColor: colors.border.default, background: colors.bg.page }}>
+            <div className="grid border-b" style={{ gridTemplateColumns: "1fr 120px 120px 120px 100px", background: colors.bg.panel, borderColor: colors.border.default }}>
+              {["FIXTURE", "FIELD", "OLD VALUE", "NEW VALUE", "WHEN"].map((h) => (
+                <div key={h} className="px-3 py-2 text-[9px] tracking-[0.15em] uppercase overflow-hidden" style={{ ...mono, color: colors.text.tertiary, borderRight: `1px solid ${colors.border.light}` }}>{h}</div>
+              ))}
+            </div>
+            {DEMO_CHANGES.map((ch, idx) => (
+              <div key={ch.id} className="grid border-b"
+                style={{ gridTemplateColumns: "1fr 120px 120px 120px 100px", background: idx % 2 === 0 ? colors.bg.page : colors.bg.alt, borderColor: colors.border.light }}>
+                <div className="px-3 py-2.5 overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                  <div className="text-[11px] truncate" style={{ fontWeight: 500, color: colors.text.primary }}>{ch.fixtureName}</div>
+                  <div className="text-[9px]" style={{ color: colors.text.muted }}>{ch.fixtureId} &middot; {ch.user}</div>
+                </div>
+                <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                  <span className="text-[10px]" style={{ ...mono, color: colors.text.tertiary }}>{ch.field}</span>
+                </div>
+                <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                  <span className="text-[10px] line-through" style={{ ...mono, color: colors.fail.fg }}>{ch.oldValue || "(empty)"}</span>
+                </div>
+                <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: `1px solid ${colors.border.light}` }}>
+                  <span className="text-[10px]" style={{ ...mono, color: colors.pass.fg }}>{ch.newValue}</span>
+                </div>
+                <div className="px-3 py-2.5 flex items-center overflow-hidden">
+                  <span className="text-[10px]" style={{ ...mono, color: colors.text.muted }}>{timeAgo(ch.timestamp)}</span>
+                </div>
+              </div>
             ))}
           </div>
-          {DEMO_CHANGES.map((ch, idx) => (
-            <div key={ch.id} className="grid border-b border-[#f0f0f2]"
-              style={{ gridTemplateColumns: "1fr 120px 120px 120px 100px", background: idx % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-              <div className="px-3 py-2.5 overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <div className="text-[11px] truncate" style={{ fontWeight: 500, color: "#1f2937" }}>{ch.fixtureName}</div>
-                <div className="text-[9px]" style={{ color: "#9ca3af" }}>{ch.fixtureId} &middot; {ch.user}</div>
-              </div>
-              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <span className="text-[10px]" style={{ ...mono, color: "#6b7280" }}>{ch.field}</span>
-              </div>
-              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <span className="text-[10px] line-through" style={{ ...mono, color: "#dc2626" }}>{ch.oldValue || "(empty)"}</span>
-              </div>
-              <div className="px-3 py-2.5 flex items-center overflow-hidden" style={{ borderRight: "1px solid #f0f0f2" }}>
-                <span className="text-[10px]" style={{ ...mono, color: "#16a34a" }}>{ch.newValue}</span>
-              </div>
-              <div className="px-3 py-2.5 flex items-center overflow-hidden">
-                <span className="text-[10px]" style={{ ...mono, color: "#9ca3af" }}>{timeAgo(ch.timestamp)}</span>
-              </div>
-            </div>
-          ))}
         </div>
       )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-2 border border-[#e5dfd0]" style={{ background: "#fdfcf8" }}>
-        <span className="text-[9px] tracking-widest uppercase" style={{ ...mono, color: "#92800a" }}>
-          One platform from audit to submission — every action traceable
-        </span>
-        <span className="text-[9px]" style={{ ...mono, color: "#a0903a" }}>
-          Export full audit trail for compliance documentation
-        </span>
-      </div>
+      <FooterBar
+        left="One platform from audit to submission — every action traceable"
+        right="Export full audit trail for compliance documentation"
+      />
     </div>
   )
 }
