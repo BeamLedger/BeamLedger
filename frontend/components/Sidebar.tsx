@@ -107,7 +107,7 @@ export default function Sidebar() {
       <div className="px-5 pt-5 pb-4 border-b border-[#e0d0d0]">
         <div
           className="text-[9px] tracking-[0.2em] uppercase mb-2"
-          style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#991b1b" }}
+          style={{ fontFamily: "'Ubin Sans', monospace", color: "#991b1b" }}
         >
           CVRS &middot; v2.4.1
         </div>
@@ -117,7 +117,7 @@ export default function Sidebar() {
             BeamLedger
           </span>
         </div>
-        <div className="text-[9px] tracking-widest uppercase" style={{ color: "#991b1b", fontFamily: "'IBM Plex Mono', monospace" }}>
+        <div className="text-[9px] tracking-widest uppercase" style={{ color: "#991b1b", fontFamily: "'Ubin Sans', monospace" }}>
           Compliance Verification
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function Sidebar() {
           <div key={section.section} className="mb-5">
             <div
               className="px-5 mb-1 text-[9px] tracking-[0.18em] uppercase"
-              style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#7f1d1d" }}
+              style={{ fontFamily: "'Ubin Sans', monospace", color: "#7f1d1d" }}
             >
               {section.section}
             </div>
@@ -161,13 +161,13 @@ export default function Sidebar() {
       <div className="px-5 py-4 border-t border-[#e0d0d0]">
         <div className="flex items-center gap-1.5 mb-1">
           <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-          <span className="text-[10px]" style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#16a34a" }}>
+          <span className="text-[10px]" style={{ fontFamily: "'Ubin Sans', monospace", color: "#16a34a" }}>
             SYSTEM ONLINE
           </span>
         </div>
         <div
           className="text-[9px] leading-relaxed"
-          style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#9b7070" }}
+          style={{ fontFamily: "'Ubin Sans', monospace", color: "#9b7070" }}
         >
           SESSION ACTIVE<br />
           AUTH: LEVEL-2

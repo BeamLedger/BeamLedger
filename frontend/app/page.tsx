@@ -7,7 +7,7 @@ import { evaluateFixture, computeComplianceScore } from "../lib/compliance/engin
 import { STANDARD_DEFINITIONS } from "../lib/compliance/standards"
 import type { ComplianceStatus, FixtureEvaluation } from "../lib/compliance/types"
 
-const mono = { fontFamily: "'IBM Plex Mono', monospace" } as const
+const mono = { fontFamily: "'Ubin Sans', monospace" } as const
 
 function StatusStamp({ status }: { status: ComplianceStatus }) {
   const config: Record<ComplianceStatus, { color: string; bg: string; border: string; label: string; Icon: typeof CheckCircle2 }> = {

@@ -24,14 +24,14 @@ export default function UtilityBar() {
       >
         <div
           className="text-[10px] tracking-widest"
-          style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#9ca3af" }}
+          style={{ fontFamily: "'Ubin Sans', monospace", color: "#9ca3af" }}
         >
           BEAMLEDGER CVRS &middot; AUTHORIZED USE ONLY
         </div>
         <div className="flex items-center gap-4">
           <div
             className="text-[10px] tracking-wider"
-            style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#9ca3af" }}
+            style={{ fontFamily: "'Ubin Sans', monospace", color: "#9ca3af" }}
           >
             <Activity size={9} className="inline mr-1" />
             {new Date().toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
@@ -44,11 +44,11 @@ export default function UtilityBar() {
         className="flex-shrink-0 h-9 flex items-center px-6 border-b border-[#e5e7eb] gap-1"
         style={{ background: "#ffffff" }}
       >
-        <span className="text-[10px] tracking-wider" style={{ color: "#9ca3af", fontFamily: "'IBM Plex Mono', monospace" }}>
+        <span className="text-[10px] tracking-wider" style={{ color: "#9ca3af", fontFamily: "'Ubin Sans', monospace" }}>
           BEAMLEDGER
         </span>
         <ChevronRight size={10} color="#9ca3af" />
-        <span className="text-[10px] tracking-wider" style={{ color: "#374151", fontFamily: "'IBM Plex Mono', monospace" }}>
+        <span className="text-[10px] tracking-wider" style={{ color: "#374151", fontFamily: "'Ubin Sans', monospace" }}>
           {breadcrumb}
         </span>
       </div>

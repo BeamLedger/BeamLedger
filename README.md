@@ -110,6 +110,12 @@ docker-compose up --build
 
 Backend on `:8000`, frontend on `:3001`.
 
+## Typography
+
+BeamLedger uses **Ubin Sans** by [Wahyu Eka Prasetya](https://www.cufonfonts.com/font/ubin-sans). Free for personal and commercial use.
+
+Font files (`UbinSans-Yq5Aa.woff`, `UbinSans-Yq5Aa.otf`) are self-hosted in `frontend/public/fonts/`.
+
 ## License
 
 Proprietary. All rights reserved.

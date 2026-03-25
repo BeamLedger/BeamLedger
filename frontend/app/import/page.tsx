@@ -8,7 +8,7 @@ import {
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
 
-const mono = { fontFamily: "'IBM Plex Mono', monospace" } as const
+const mono = { fontFamily: "'Ubin Sans', monospace" } as const
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

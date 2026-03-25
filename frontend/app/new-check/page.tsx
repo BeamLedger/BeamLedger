@@ -5,7 +5,7 @@ import { productTypes, standardsDatabase } from "../../lib/mockData"
 import { Shield, Radio, Zap, Leaf, FileText, ChevronRight, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
-const mono = { fontFamily: "'IBM Plex Mono', monospace" } as const
+const mono = { fontFamily: "'Ubin Sans', monospace" } as const
 
 const CATEGORY_META: Record<string, { color: string; bg: string; border: string; label: string }> = {
   Safety:        { color: "#2563eb", bg: "#eff6ff", border: "#93c5fd", label: "SAFETY" },
@@ -181,7 +181,7 @@ export default function NewCheckPage() {
                     </label>
                     <input
                       className={inputClass}
-                      style={{ ...inputStyle, fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ ...inputStyle, fontFamily: "'Ubin Sans', monospace" }}
                       placeholder="e.g., SG-LED-2000-X"
                       value={formData.modelNumber}
                       onChange={(e) => setFormData({ ...formData, modelNumber: e.target.value })}

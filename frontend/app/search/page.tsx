@@ -11,7 +11,7 @@ import { evaluateFixture, computeComplianceScore } from "../../lib/compliance/en
 import { STANDARD_DEFINITIONS } from "../../lib/compliance/standards"
 import type { Fixture, ComplianceStatus, StandardId, SortField, SortDirection, FixtureEvaluation } from "../../lib/compliance/types"
 
-const mono = { fontFamily: "'IBM Plex Mono', monospace" } as const
+const mono = { fontFamily: "'Ubin Sans', monospace" } as const
 
 // ── Debounce hook ────────────────────────────────────────────────────────────
 

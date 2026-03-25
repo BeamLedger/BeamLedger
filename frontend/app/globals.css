@@ -2,13 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ubin Sans — designed by Wahyu Eka Prasetya. Free for personal & commercial use. */
+@font-face {
+  font-family: 'Ubin Sans';
+  src: url('/fonts/UbinSans-Yq5Aa.woff') format('woff'),
+       url('/fonts/UbinSans-Yq5Aa.otf') format('opentype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 body {
-  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Ubin Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #ffffff;
 }
 
 code, pre, .mono {
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-family: 'Ubin Sans', 'Courier New', monospace;
 }
 
 /* Remove default radius from all UI elements for the government aesthetic */
@@ -18,7 +27,7 @@ code, pre, .mono {
 
 /* Native input/select/textarea baseline */
 input, select, textarea {
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: 'Ubin Sans', sans-serif;
   background: #ffffff;
   color: #1f2937;
   border: 1px solid #e5e7eb;

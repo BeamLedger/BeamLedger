@@ -16,7 +16,7 @@ import {
   FileText,
 } from "lucide-react"
 
-const mono = { fontFamily: "'IBM Plex Mono', monospace" } as const
+const mono = { fontFamily: "'Ubin Sans', monospace" } as const
 
 const CATEGORY_META: Record<string, { color: string; bg: string; border: string; label: string }> = {
   Safety:        { color: "#2563eb", bg: "#eff6ff", border: "#93c5fd", label: "SAFETY" },
